@@ -1,0 +1,46 @@
+[settings]
+    arch=x86_64
+    build_type=Release
+    compiler=gcc
+    compiler.libcxx=libstdc++11
+    compiler.version=7
+    cppstd=17
+    os=Linux
+
+[requires]
+    gflags/2.Y.Z
+    glog/0.4.0
+
+[options]
+
+
+[full_settings]
+    arch=x86_64
+    arch_build=x86_64
+    build_type=Release
+    compiler=gcc
+    compiler.libcxx=libstdc++11
+    compiler.version=7
+    cppstd=17
+    os=Linux
+    os_build=Linux
+
+[full_requires]
+    gflags/2.2.2:00c98caa4d6671605623f39dba94f8a482c5f538
+    glog/0.4.0:cc4e1230d0b57d9c08afdb6905dc49ef97ce1b00
+
+[full_options]
+    gflags:fPIC=True
+    gflags:namespace=gflags
+    gflags:nothreads=True
+    gflags:shared=False
+    glog:fPIC=True
+    glog:shared=False
+    glog:with_gflags=True
+    glog:with_threads=True
+
+[recipe_hash]
+
+
+[env]
+

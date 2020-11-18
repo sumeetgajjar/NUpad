@@ -1,0 +1,3 @@
+[requires]
+gflags/2.2.2
+glog/0.4.0
