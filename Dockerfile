@@ -29,5 +29,4 @@ RUN cmake .. && make
 
 FROM ubuntu:18.04
 ENV GLOG_alsologtostderr=1
-COPY --from=buildStage /NUpad/build/NUpad /
-ENTRYPOINT ["/NUpad"]
+COPY --from=buildStage /NUpad/build/bin/* /
