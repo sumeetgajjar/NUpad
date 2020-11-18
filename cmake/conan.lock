@@ -1,0 +1,35 @@
+{
+ "graph_lock": {
+  "nodes": {
+   "0": {
+    "options": "gflags:fPIC=True\ngflags:namespace=gflags\ngflags:nothreads=True\ngflags:shared=False\nglog:fPIC=True\nglog:shared=False\nglog:with_gflags=True\nglog:with_threads=True",
+    "requires": [
+     "1",
+     "2"
+    ],
+    "path": "../conanfile.txt",
+    "context": "host"
+   },
+   "1": {
+    "ref": "gflags/2.2.2",
+    "options": "fPIC=True\nnamespace=gflags\nnothreads=True\nshared=False",
+    "package_id": "00c98caa4d6671605623f39dba94f8a482c5f538",
+    "prev": "0",
+    "context": "host"
+   },
+   "2": {
+    "ref": "glog/0.4.0",
+    "options": "fPIC=True\nshared=False\nwith_gflags=True\nwith_threads=True\ngflags:fPIC=True\ngflags:namespace=gflags\ngflags:nothreads=True\ngflags:shared=False",
+    "package_id": "cc4e1230d0b57d9c08afdb6905dc49ef97ce1b00",
+    "prev": "0",
+    "requires": [
+     "1"
+    ],
+    "context": "host"
+   }
+  },
+  "revisions_enabled": false
+ },
+ "version": "0.4",
+ "profile_host": "[settings]\narch=x86_64\narch_build=x86_64\nbuild_type=Release\ncompiler=gcc\ncompiler.libcxx=libstdc++11\ncompiler.version=7\ncppstd=17\nos=Linux\nos_build=Linux\n[options]\n[build_requires]\n[env]\n"
+}

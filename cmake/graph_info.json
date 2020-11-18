@@ -1,0 +1,42 @@
+{
+ "options": [
+  [
+   "gflags:fPIC",
+   "True"
+  ],
+  [
+   "gflags:namespace",
+   "gflags"
+  ],
+  [
+   "gflags:nothreads",
+   "True"
+  ],
+  [
+   "gflags:shared",
+   "False"
+  ],
+  [
+   "glog:fPIC",
+   "True"
+  ],
+  [
+   "glog:shared",
+   "False"
+  ],
+  [
+   "glog:with_gflags",
+   "True"
+  ],
+  [
+   "glog:with_threads",
+   "True"
+  ]
+ ],
+ "root": {
+  "name": null,
+  "version": null,
+  "user": null,
+  "channel": null
+ }
+}
