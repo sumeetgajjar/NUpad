@@ -19,5 +19,5 @@ find_package(glog 0.4.0 REQUIRED)
 find_package(GTest 1.8.1 REQUIRED)
 
 add_subdirectory(app)
-add_subdirectory(crdt)
+add_subdirectory(crdt_lib)
 add_subdirectory(server)

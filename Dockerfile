@@ -23,11 +23,12 @@ COPY install-dependencies.sh conanfile.txt CMakeLists.txt NUpad/
 RUN cd NUpad && chmod +x install-dependencies.sh && ./install-dependencies.sh
 
 COPY app NUpad/app
-COPY crdt NUpad/crdt
+COPY crdt_lib NUpad/crdt_lib
 COPY server NUpad/server
 
 WORKDIR NUpad/build
 RUN cmake .. && make
+RUN ./bin/nupad_crdt_test
 
 FROM ubuntu:18.04
 ENV GLOG_alsologtostderr=1

@@ -11,7 +11,7 @@ namespace nupad::clock {
     bool VectorClock::initialized = false;
 
     void VectorClock::init() {
-        CHECK(!initialized);
+        CHECK(!initialized) << "VectorClock already initialized";
         initialized = true;
         LOG(INFO) << "VectorClock initialized";
     }
