@@ -13,7 +13,6 @@ mkdir ${CMAKE_MODULES_DIR}
 conan install . \
   --generator cmake_find_package \
   --install-folder=${CMAKE_MODULES_DIR} \
-  -r conan-center \
   -s os=Linux \
   -s os_build=Linux \
   -s arch=x86_64 \

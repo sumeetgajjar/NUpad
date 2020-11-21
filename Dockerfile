@@ -19,15 +19,17 @@ ENV PATH="/cmake-3.17.4-Linux-x86_64/bin:${PATH}"
 
 RUN mkdir -p NUpad/build
 
-COPY install-dependencies.sh conanfile.txt NUpad/
+COPY install-dependencies.sh conanfile.txt CMakeLists.txt NUpad/
 RUN cd NUpad && chmod +x install-dependencies.sh && ./install-dependencies.sh
 
-COPY CMakeLists.txt NUpad/
-COPY src NUpad/src
+COPY app NUpad/app
+COPY crdt_lib NUpad/crdt_lib
+COPY server NUpad/server
+
 WORKDIR NUpad/build
 RUN cmake .. && make
+RUN ./bin/nupad_crdt_test
 
 FROM ubuntu:18.04
 ENV GLOG_alsologtostderr=1
-COPY --from=buildStage /NUpad/build/NUpad /
-ENTRYPOINT ["/NUpad"]
+COPY --from=buildStage /NUpad/build/bin/* /

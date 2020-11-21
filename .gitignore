@@ -5,6 +5,7 @@ cmake-build-debug
 cmake_modules
 logs
 __pycache__
+cmake
 
 # Created by .ignore support plugin (hsz.mobi)
 ### CMake template

@@ -4,5 +4,5 @@
 #include <glog/logging.h>
 
 int main(int argc, char **argv) {
-    LOG(INFO) << "Hello world";
+    LOG(INFO) << "Hello world Server";
 }
