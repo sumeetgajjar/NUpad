@@ -1,6 +1,8 @@
 *
 
-!src
+!app
+!crdt
+!server
 !install-dependencies.sh
 !CMakeLists.txt
 !conanfile.txt
