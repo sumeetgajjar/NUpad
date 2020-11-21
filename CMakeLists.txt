@@ -17,4 +17,6 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(gflags 2.2.2 REQUIRED COMPONENTS nothreads_static)
 find_package(glog 0.4.0 REQUIRED)
 
-add_subdirectory(src)
+add_subdirectory(app)
+add_subdirectory(crdt)
+add_subdirectory(server)
