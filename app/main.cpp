@@ -8,7 +8,7 @@
 int main(int argc, char **argv) {
     using namespace nupad;
     LOG(INFO) << "Hello world App";
-    clock::VectorClock::init();
+    clock::VectorClock::init("1");
     crdt::CRDTList<char> crdtList;
     LOG(INFO) << "size: " << crdtList.getContents().size();
 }
