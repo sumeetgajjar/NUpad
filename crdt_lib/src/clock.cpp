@@ -10,7 +10,7 @@ namespace nupad::clock {
 
     PeerId VectorClock::myPeerId_;
     bool VectorClock::initialized_ = false;
-    ClockState VectorClock::clockState_(10);
+    ClockState VectorClock::clockState_(10 /*initial capacity*/);
 
     void VectorClock::init(PeerId myPeerId) {
         CHECK(!VectorClock::initialized_) << "VectorClock already initialized";
