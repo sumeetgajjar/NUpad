@@ -8,12 +8,11 @@
 
 class VectorClockTest : public ::testing::Test {
 protected:
+    static const nupad::PeerId myPeerId_;
+
     static void SetUpTestSuite() {
         nupad::clock::VectorClock::init(myPeerId_);
     }
-
-public:
-    static const nupad::PeerId myPeerId_;
 };
 
 const nupad::PeerId VectorClockTest::myPeerId_("1");
