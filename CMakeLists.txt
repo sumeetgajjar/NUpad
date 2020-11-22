@@ -16,7 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(gflags 2.2.2 REQUIRED COMPONENTS nothreads_static)
 find_package(glog 0.4.0 REQUIRED)
-find_package(GTest 1.8.1 REQUIRED)
+find_package(GTest 1.10.0 REQUIRED)
 
 add_subdirectory(app)
 add_subdirectory(crdt_lib)
