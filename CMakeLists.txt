@@ -17,6 +17,21 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 find_package(gflags 2.2.2 REQUIRED COMPONENTS nothreads_static)
 find_package(glog 0.4.0 REQUIRED)
 find_package(GTest 1.8.1 REQUIRED)
+# Find Protobuf installation
+set(protobuf_MODULE_COMPATIBLE TRUE)
+find_package(protobuf CONFIG REQUIRED)
+message(STATUS "Using protobuf ${protobuf_VERSION}")
+
+set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
+# set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
+find_program(_PROTOBUF_PROTOC protoc ${CONAN_BIN_DIRS_PROTOBUF} NO_DEFAULT_PATH)
+
+# Find gRPC installation
+find_package(gRPC CONFIG REQUIRED)
+# find_package(protoc CONFIG REQUIRED)
+message(STATUS "Using gRPC ${gRPC_VERSION}")
+
+set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 add_subdirectory(app)
 add_subdirectory(crdt_lib)
