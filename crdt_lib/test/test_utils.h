@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 class TestUtils {
+    static long randomSeed;
     static std::default_random_engine randomEngine;
 public:
     static void init(int argc, char **argv);
@@ -22,15 +23,16 @@ long getRandomSeed() {
     using namespace std::chrono;
     milliseconds currentMillis = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     long seed = currentMillis.count();
-//    LOG(INFO) << "Seed: " << seed;
     return seed;
 }
 
-std::default_random_engine TestUtils::randomEngine(/*seed*/ getRandomSeed());
+long TestUtils::randomSeed(getRandomSeed());
+std::default_random_engine TestUtils::randomEngine(randomSeed);
 
 void TestUtils::init(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
     ::testing::InitGoogleTest(&argc, argv);
+    LOG(ERROR) << "Seed: " << randomSeed;
 }
 
 int TestUtils::getRandomInt(const int min, const int max) {
