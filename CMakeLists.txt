@@ -35,6 +35,6 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 add_subdirectory(app)
+add_subdirectory(proto)
 add_subdirectory(crdt_lib)
 add_subdirectory(server)
-add_subdirectory(proto)

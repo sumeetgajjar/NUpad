@@ -1,6 +1,6 @@
 # Include generated *.pb.h files
-# hack to get to the generated files in proto binary directory
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/..")
+# hack to get to the generated files in proto binary directory for this directory
+include_directories("${CMAKE_BINARY_DIR}")
 
 # As per https://github.com/inexorgame/conan-grpc/issues/42; grpc_cronet is missing in the build
 list(REMOVE_ITEM CONAN_LIBS grpc_cronet)

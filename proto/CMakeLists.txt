@@ -25,5 +25,4 @@ add_custom_command(
 # Build generated sources as an object library
 add_library(hw_proto_obj OBJECT ${hw_proto_srcs} ${hw_grpc_srcs})
 # include the generated sources for other cmake files to find
-# TODO: think if you can directly expose the proto binary tree here
-target_include_directories(hw_proto_obj PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(hw_proto_obj PUBLIC ${CMAKE_BINARY_DIR})
