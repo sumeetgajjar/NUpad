@@ -20,7 +20,6 @@ namespace nupad::crdt {
      */
     template<typename T>
     class CRDTList {
-    private:
         class Node {
         public:
             const ElementId insertionTS;
