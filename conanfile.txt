@@ -5,5 +5,6 @@ gtest/1.8.1
 grpc/1.29.1@inexorgame/stable
 
 [generators]
+cmake
 cmake_find_package
 cmake_find_package_multi

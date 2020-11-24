@@ -25,6 +25,7 @@ RUN cd NUpad && chmod +x install-dependencies.sh && ./install-dependencies.sh
 COPY app NUpad/app
 COPY crdt_lib NUpad/crdt_lib
 COPY server NUpad/server
+COPY proto NUpad/proto
 
 WORKDIR NUpad/build
 RUN cmake .. && make
