@@ -13,7 +13,7 @@ namespace nupad {
     typedef std::string PeerId;
 
     namespace clock {
-        typedef uint32_t Tick;
+        typedef int Tick;
         typedef std::unordered_map<PeerId, Tick> ClockState;
     }
 }

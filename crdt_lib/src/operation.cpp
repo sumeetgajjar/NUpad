@@ -27,7 +27,9 @@ namespace nupad::crdt {
     }
 
     ElementId::ElementId(PeerId peerId, const nupad::clock::Tick &tick) :
-            peerId_(std::move(peerId)), tick_(tick) {}
+            peerId_(std::move(peerId)), tick_(tick) {
+        CHECK_GE(tick_, 0) << "tick cannot be negative: " << tick;
+    }
 
     bool ElementId::operator==(const ElementId &rhs) const {
         return peerId_ == rhs.peerId_ && tick_ == rhs.tick_;
@@ -68,7 +70,7 @@ namespace nupad::crdt {
     }
 
     std::ostream &operator<<(std::ostream &os, const ElementId &id) {
-        os << "peerId_: " << id.peerId_ << " tick_: " << id.tick_;
+        os << "peerId_: " << id.peerId_ << ", tick_: " << id.tick_;
         return os;
     }
 
