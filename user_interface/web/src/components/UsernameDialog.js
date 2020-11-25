@@ -13,10 +13,12 @@ class UsernameDialog extends Component {
         this.state = {'open': true};
     }
 
-    handleClose() {
+    handleClose = () => {
         // TODO: get or set user name
         console.log("handle dialog close event")
-        this.state.open = false;
+        this.setState({
+            'open': false
+        })
     };
 
 

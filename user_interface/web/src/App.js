@@ -20,7 +20,15 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: theme.spacing(1),
         marginRight: theme.spacing(1)
     },
-    usernameDialog: {}
+    editorDiv: {
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        marginTop: theme.spacing(1),
+        '& > *': {
+            margin: theme.spacing(0.5),
+        }
+    }
 }));
 
 
@@ -36,14 +44,14 @@ export default function App() {
                             <Title documentName="" classes={classes}/>
                         </Paper>
                     </Grid>
-                    <Grid item md={10}>
+                    <Grid item md={9}>
                         <Paper className={classes.paper} elevation={10}>
                             <TextArea/>
                         </Paper>
                     </Grid>
-                    <Grid item md={2}>
+                    <Grid item md={3}>
                         <Paper className={classes.paper} elevation={10}>
-                            <Collaborators editors={[1, 2, 3, 4]}/>
+                            <Collaborators editors={["George", "Bill", "Trump", "Obama"]} classes={classes}/>
                         </Paper>
                     </Grid>
                 </Grid>
