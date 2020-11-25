@@ -6,9 +6,10 @@
 
 namespace nupad {
 
-    Context::Context(PeerId myPeerId) : myPeerId(std::move(myPeerId)) {}
+    Context::Context(PeerId myPeerId) : myPeerId(std::move(myPeerId)), clock_
+                                    (myPeerId) {}
 
     crdt::ElementId Context::getNextElementId() {
-        return crdt::ElementId(myPeerId, clock::VectorClock::tick());
+        return crdt::ElementId(myPeerId, clock_.tick());
     }
 }

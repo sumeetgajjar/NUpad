@@ -8,56 +8,35 @@
 
 class VectorClockTest : public ::testing::Test {
 protected:
-    static const nupad::PeerId myPeerId_;
-
-    static void SetUpTestSuite() {
-        nupad::clock::VectorClock::init(myPeerId_);
+    void SetUp() override {
+        myPeerId_ = "1";
+        clock_ = new nupad::clock::VectorClock(myPeerId_);
     }
+
+    void TearDown() override {
+      delete clock_;
+    }
+
+  nupad::PeerId myPeerId_;
+  nupad::clock::VectorClock *clock_;
 };
-
-const nupad::PeerId VectorClockTest::myPeerId_("1");
-
-TEST_F(VectorClockTest, DoubleInitializationFailure) {
-    ASSERT_DEATH({
-                     nupad::clock::VectorClock::init(myPeerId_);
-                 }, "VectorClock already initialized");
-}
 
 TEST_F(VectorClockTest, VectorClockOperations) {
     nupad::clock::ClockState expectedClockState = {{myPeerId_, 0}};
-    ASSERT_EQ(nupad::clock::VectorClock::getState(), expectedClockState);
+    ASSERT_EQ(clock_->getState(), expectedClockState);
 
-    nupad::clock::VectorClock::tick();
+    clock_->tick();
     expectedClockState = {{myPeerId_, 1}};
-    ASSERT_EQ(nupad::clock::VectorClock::getState(), expectedClockState);
+    ASSERT_EQ(clock_->getState(), expectedClockState);
 
-    nupad::clock::VectorClock::tick();
+    clock_->tick();
     expectedClockState = {{myPeerId_, 2}};
-    ASSERT_EQ(nupad::clock::VectorClock::getState(), expectedClockState);
-
-    const nupad::PeerId otherPeerId("random");
-    const nupad::clock::Tick otherPeerTick = 198;
-    nupad::clock::VectorClock::update(otherPeerId, otherPeerTick);
-    expectedClockState = {{myPeerId_,   2},
-                          {otherPeerId, otherPeerTick}};
-    ASSERT_EQ(nupad::clock::VectorClock::getTick(otherPeerId), otherPeerTick);
-    ASSERT_EQ(nupad::clock::VectorClock::getState(), expectedClockState);
-
-    nupad::clock::VectorClock::update(otherPeerId, otherPeerTick + 1);
-    ASSERT_EQ(nupad::clock::VectorClock::getTick(otherPeerId), otherPeerTick + 1);
+    ASSERT_EQ(clock_->getState(), expectedClockState);
 }
 
 TEST_F(VectorClockTest, UpdateFailsWithLowerTickValue) {
+    clock_->update(12);
     ASSERT_DEATH({
-                     const nupad::PeerId otherPeerId("random");
-                     const nupad::clock::Tick otherPeerTick = 19;
-                     nupad::clock::VectorClock::update(otherPeerId, otherPeerTick);
-                     nupad::clock::VectorClock::update(otherPeerId, otherPeerTick - 1);
+                     clock_->update(10);
                  }, "new tick value should be strictly greater than current tick value");
-}
-
-int main(int argc, char **argv) {
-    google::InitGoogleLogging(argv[0]);
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }

@@ -5,23 +5,32 @@
 #ifndef NUPAD_CLOCK_H
 #define NUPAD_CLOCK_H
 
+#include <glog/logging.h>
 #include <types.h>
+
+#include <utility>
 
 namespace nupad::clock {
     class VectorClock {
-        static bool initialized_;
-        static PeerId myPeerId_;
-        static ClockState clockState_;
+        bool initialized_ = false;
+        PeerId myPeerId_;
+        Tick tick_;
     public:
-        static void init(PeerId myPeerId);
+        explicit VectorClock(PeerId myPeerId) {
+          myPeerId_ = std::move(myPeerId);
+          CHECK_STRNE(myPeerId_.c_str(), "") << "myPeerId cannot be empty";
+          tick_ = 0;
+          initialized_ = true;
+          LOG(INFO) << "VectorClock initialized";
+        }
 
-        static Tick tick(Tick tick = 1);
+        Tick tick();
 
-        static void update(const PeerId &peerId, Tick tick);
+        void update(Tick tick);
 
-        static Tick getTick(const PeerId &peerId = myPeerId_);
+        Tick getTick();
 
-        static ClockState getState();
+        ClockState getState();
     };
 }
 

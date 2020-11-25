@@ -104,8 +104,3 @@ TEST(ElementIdTestSuite, GreaterThanTest) {
     ASSERT_GE(elementId5, elementId4);
     ASSERT_GE(elementId6, elementId5);
 }
-
-int main(int argc, char **argv) {
-    TestUtils::init(argc, argv);
-    RUN_ALL_TESTS();
-}
