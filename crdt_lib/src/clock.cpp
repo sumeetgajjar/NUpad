@@ -21,9 +21,10 @@ namespace nupad::clock {
         LOG(INFO) << "VectorClock initialized";
     }
 
-    void VectorClock::tick(const Tick tick) {
+    Tick VectorClock::tick(const Tick tick) {
         CHECK(initialized_) << "VectorClock not initialized";
         clockState_.at(myPeerId_) += tick;
+        return clockState_.at(myPeerId_);
     }
 
     void VectorClock::update(const PeerId &peerId, const Tick tick) {

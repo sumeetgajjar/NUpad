@@ -2,13 +2,23 @@
 // Created by sumeet on 11/18/20.
 //
 #include <clock.h>
-#include <crdt_list.h>
+#include <list.h>
 #include <glog/logging.h>
+
+
 
 int main(int argc, char **argv) {
     using namespace nupad;
     LOG(INFO) << "Hello world App";
-    clock::VectorClock::init("1");
-    crdt::CRDTList<char> crdtList;
+    auto myPeerId = "1";
+    clock::VectorClock::init(myPeerId);
+    auto context = Context(myPeerId);
+    crdt::DoublyLinkedList<char> crdtList(context);
+    for (int i = 0; i < 10; ++i) {
+        crdtList.insert(i, 'a' + i);
+    }
+    for (auto item: crdtList.getContents()) {
+        LOG(INFO) << item;
+    }
     LOG(INFO) << "size: " << crdtList.getContents().size();
 }
