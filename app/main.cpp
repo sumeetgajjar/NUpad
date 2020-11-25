@@ -6,9 +6,10 @@
 #include <glog/logging.h>
 
 
-
 int main(int argc, char **argv) {
     using namespace nupad;
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_alsologtostderr = 1;
     LOG(INFO) << "Hello world App";
     auto myPeerId = "1";
     clock::VectorClock::init(myPeerId);
