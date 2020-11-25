@@ -20,16 +20,9 @@ find_package(GTest 1.10.0 REQUIRED)
 
 include(ExternalProject)
 ExternalProject_Add(
-        nsq_client
-
-        PREFIX ${CMAKE_SOURCE_DIR}/3rdparty/nsq_client
-
-        GIT_REPOSITORY "https://github.com/sumeetgajjar/evpp.git"
-        GIT_TAG "nupad"
-
-        SOURCE_DIR nsq_client
+        evpp
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/3rdparty/evpp
         CMAKE_ARGS -DCMAKE_MODULE_PATH=${PROJECT_SOURCE_DIR}/cmake -DEVPP_VCPKG_BUILD=1 -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/3rdparty/install
-
         BUILD_COMMAND make -j 12
 )
 

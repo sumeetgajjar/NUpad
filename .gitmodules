@@ -1,0 +1,4 @@
+[submodule "3rdparty/evpp"]
+	path = 3rdparty/evpp
+	url = git@github.com:sumeetgajjar/evpp.git
+	branch = nupad

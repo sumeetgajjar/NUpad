@@ -24,6 +24,7 @@ RUN mkdir -p NUpad/build
 COPY install-dependencies.sh conanfile.txt NUpad/
 RUN cd NUpad && chmod +x install-dependencies.sh && ./install-dependencies.sh
 
+COPY 3rdparty/evpp NUpad/3rdparty/evpp
 COPY app NUpad/app
 COPY crdt_lib NUpad/crdt_lib
 
