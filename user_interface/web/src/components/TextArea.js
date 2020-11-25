@@ -2,6 +2,8 @@ import React, {Component} from 'react'
 import TextField from "@material-ui/core/TextField";
 
 class TextArea extends Component {
+
+
     render() {
         return (
             <TextField
@@ -11,6 +13,8 @@ class TextArea extends Component {
                 rows={20}
                 variant="outlined"
                 fullWidth
+                value={this.props.content}
+                onChange={this.props.onChange}
             />
         )
     }

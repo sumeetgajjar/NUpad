@@ -10,21 +10,28 @@ class UsernameDialog extends Component {
 
     constructor(props, context) {
         super(props, context);
-        this.state = {'open': true};
+        this.state = {open: true};
     }
 
-    handleClose = () => {
-        // TODO: get or set user name
-        console.log("handle dialog close event")
+    handleUsernameInput = (e) => {
         this.setState({
-            'open': false
-        })
-    };
+            username: e.target.value
+        });
+    }
 
+    handleClick = (e) => {
+        if (!this.state.username) {
+            return false;
+        }
+        this.props.onChange(this.state.username);
+        this.setState({
+            open: false
+        });
+    };
 
     render() {
         return (
-            <div className={this.props.classes.usernameDialog}>
+            <div className={this.props.styleClasses.usernameDialog}>
                 <Dialog open={this.state.open} aria-labelledby="form-dialog-title" fullWidth={true}
                         onEscapeKeyDown={() => false}>
                     <DialogTitle id="form-dialog-title">Enter username</DialogTitle>
@@ -34,12 +41,14 @@ class UsernameDialog extends Component {
                             margin="dense"
                             id="name"
                             label="Username"
+                            helperText="Username required before you start editing"
                             required
                             fullWidth
+                            onChange={this.handleUsernameInput}
                         />
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={this.handleClose} color="primary">
+                        <Button onClick={this.handleClick} color="primary">
                             Start Editing
                         </Button>
                     </DialogActions>
