@@ -12,6 +12,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# finding all dependencies
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+find_package(gflags 2.2.2 REQUIRED COMPONENTS nothreads_static)
+find_package(glog 0.4.0 REQUIRED)
+find_package(GTest 1.10.0 REQUIRED)
+
 include(ExternalProject)
 ExternalProject_Add(
         nsq_client
@@ -26,12 +32,6 @@ ExternalProject_Add(
 
         BUILD_COMMAND make -j 12
 )
-
-# finding all dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-find_package(gflags 2.2.2 REQUIRED COMPONENTS nothreads_static)
-find_package(glog 0.4.0 REQUIRED)
-find_package(GTest 1.10.0 REQUIRED)
 
 enable_testing()
 macro(add_test_wrapper target)

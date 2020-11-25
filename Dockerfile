@@ -21,12 +21,13 @@ ENV PATH="/cmake-3.17.4-Linux-x86_64/bin:${PATH}"
 
 RUN mkdir -p NUpad/build
 
-COPY install-dependencies.sh conanfile.txt CMakeLists.txt NUpad/
+COPY install-dependencies.sh conanfile.txt NUpad/
 RUN cd NUpad && chmod +x install-dependencies.sh && ./install-dependencies.sh
 
 COPY app NUpad/app
 COPY crdt_lib NUpad/crdt_lib
 
+COPY CMakeLists.txt NUpad/
 WORKDIR NUpad/build
 RUN cmake .. && make && make test
 
