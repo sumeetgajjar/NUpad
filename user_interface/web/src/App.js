@@ -11,6 +11,9 @@ import UsernameDialog from "./components/UsernameDialog"
 import './App.css';
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        marginTop: theme.spacing(3)
+    },
     paper: {
         padding: theme.spacing(2),
         textAlign: 'center',
