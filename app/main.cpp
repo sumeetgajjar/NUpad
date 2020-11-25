@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     auto myPeerId = "1";
     clock::VectorClock::init(myPeerId);
     auto context = Context(myPeerId);
-    crdt::CRDTList<char> crdtList(context);
+    crdt::DoublyLinkedList<char> crdtList(context);
     for (int i = 0; i < 10; ++i) {
         crdtList.insert(i, 'a' + i);
     }

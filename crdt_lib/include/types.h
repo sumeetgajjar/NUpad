@@ -7,7 +7,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <sstream>
 
 namespace nupad {
     typedef std::string PeerId;

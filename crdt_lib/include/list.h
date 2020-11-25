@@ -19,7 +19,7 @@ namespace nupad::crdt {
      * ref: https://stackoverflow.com/questions/8752837/undefined-reference-to-template-class-constructor
      */
     template<typename T>
-    class CRDTList {
+    class DoublyLinkedList {
         class Node {
         public:
             const ElementId insertionTS;
@@ -110,8 +110,8 @@ namespace nupad::crdt {
         }
 
     public:
-        CRDTList(const Context &context) : context_(context) {
-            LOG(INFO) << "CRDTList of " << typeid(T).name() << " initialized";
+        DoublyLinkedList(const Context &context) : context_(context) {
+            LOG(INFO) << "DoublyLinkedList of " << typeid(T).name() << " initialized";
         }
 
         void apply(const Operation &operation) {
