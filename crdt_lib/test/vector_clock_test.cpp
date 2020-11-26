@@ -22,7 +22,7 @@ protected:
 };
 
 TEST(VectorInitTest, EmptyPeerIdTest) {
-  ASSERT_DEATH(nupad::clock::VectorClock(""), "myPeerId cannot be empty");
+  ASSERT_DEATH(nupad::clock::VectorClock(""), "Peer ID cannot be empty");
 }
 
 TEST_F(VectorClockTest, VectorClockOperations) {
