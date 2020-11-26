@@ -6,7 +6,9 @@ RUN apt-get update && \
     build-essential \
     git \
     ca-certificates \
-    python3.8
+    python3.8 \
+    libevent-dev \
+    libboost-dev
 
 RUN wget --no-check-certificate \
     https://github.com/Kitware/CMake/releases/download/v3.17.4/cmake-3.17.4-Linux-x86_64.tar.gz && \
@@ -19,16 +21,16 @@ ENV PATH="/cmake-3.17.4-Linux-x86_64/bin:${PATH}"
 
 RUN mkdir -p NUpad/build
 
-COPY install-dependencies.sh conanfile.txt CMakeLists.txt NUpad/
+COPY install-dependencies.sh conanfile.txt NUpad/
 RUN cd NUpad && chmod +x install-dependencies.sh && ./install-dependencies.sh
 
+COPY 3rdparty/evpp NUpad/3rdparty/evpp
 COPY app NUpad/app
 COPY crdt_lib NUpad/crdt_lib
-COPY server NUpad/server
 
+COPY CMakeLists.txt NUpad/
 WORKDIR NUpad/build
-RUN cmake .. && make
-RUN ./bin/nupad_crdt_test
+RUN cmake .. && make && make test
 
 FROM ubuntu:18.04
 ENV GLOG_alsologtostderr=1

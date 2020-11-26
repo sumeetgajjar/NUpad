@@ -10,3 +10,5 @@ FILE(GLOB TEST_FILES test/*.cpp)
 add_executable(run_all_tests ${TEST_FILES})
 target_include_directories(run_all_tests PRIVATE include)
 target_link_libraries(run_all_tests PRIVATE nupad_crdt GTest::GTest)
+
+add_test_wrapper(run_all_tests)
