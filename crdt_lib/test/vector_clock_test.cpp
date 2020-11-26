@@ -3,10 +3,9 @@
 //
 #include "clock.h"
 #include <gtest/gtest.h>
-#include <glog/logging.h>
 
 
-class VectorClockTest : public ::testing::Test {
+class VectorClockTestSuite : public ::testing::Test {
 protected:
     void SetUp() override {
         myPeerId_ = "1";
@@ -25,7 +24,7 @@ TEST(VectorInitTest, EmptyPeerIdTest) {
   ASSERT_DEATH(nupad::clock::VectorClock(""), "Peer ID cannot be empty");
 }
 
-TEST_F(VectorClockTest, VectorClockOperations) {
+TEST_F(VectorClockTestSuite, VectorClockOperations) {
     nupad::clock::ClockState expectedClockState = {{myPeerId_, 0}};
     ASSERT_EQ(clock_->getState(), expectedClockState);
 
@@ -49,11 +48,11 @@ TEST_F(VectorClockTest, VectorClockOperations) {
     ASSERT_EQ(clock_->getTick(otherPeerId), otherPeerTick + 1);
 }
 
-TEST_F(VectorClockTest, UpdateOwnTickFailTest) {
+TEST_F(VectorClockTestSuite, UpdateOwnTickFailTest) {
     ASSERT_DEATH(clock_->update(myPeerId_, 12), "Cannot update my own tick");
 }
 
-TEST_F(VectorClockTest, UpdateFailsWithLowerTickValue) {
+TEST_F(VectorClockTestSuite, UpdateFailsWithLowerTickValue) {
     nupad::PeerId otherPeerId{"2"};
     clock_->update(otherPeerId, 12);
     ASSERT_DEATH(clock_->update(otherPeerId, 10), "new tick value should be "
