@@ -6,28 +6,36 @@
 
 namespace nupad::clock {
 
-    VectorClock::VectorClock(PeerId myPeerId) : myPeerId_(std::move(myPeerId)
-                                                      ), tick_(0) {
-      CHECK_STRNE(myPeerId_.c_str(), "") << "myPeerId cannot be empty";
-      LOG(INFO) << "VectorClock initialized";
+    VectorClock::VectorClock(PeerId myPeerId) : myPeerId_(std::move(myPeerId)) {
+        CHECK_NE(myPeerId_, "") << "Peer ID cannot be empty";
+        clockState_[myPeerId_] = 0;
+        LOG(INFO) << "VectorClock initialized";
     }
 
     Tick VectorClock::tick() {
-        tick_++;
-        return tick_;
+        clockState_.at(myPeerId_)++;
+        return clockState_.at(myPeerId_);
     }
 
-    void VectorClock::update(const Tick tick) {
-        CHECK_LT(tick_, tick) << "new tick value should be strictly greater "
-                                 "than current tick value";
-        tick_ = tick;
+    void VectorClock::update(const PeerId &otherPeerId, const Tick tick) {
+        CHECK_NE(myPeerId_, otherPeerId) << "Cannot update my own tick";
+        if(clockState_.find(otherPeerId) != clockState_.end()) {
+           CHECK_LT(clockState_.at(otherPeerId), tick)
+            << "new tick value should be strictly greater than current tick value";
+        }
+        clockState_[otherPeerId] = tick;
     }
 
-    Tick VectorClock::getTick() {
-        return tick_;
+    Tick VectorClock::getTick(const PeerId &peerId) const {
+        CHECK_NE(peerId, "") << "Peer ID cannot be empty";
+        return clockState_.at(peerId);
     }
 
-    ClockState VectorClock::getState() {
-        return {{myPeerId_, tick_}};
+    Tick VectorClock::getMyTick() const {
+        return clockState_.at(myPeerId_);
+    }
+
+    ClockState VectorClock::getState() const {
+        return ClockState(clockState_);
     }
 }

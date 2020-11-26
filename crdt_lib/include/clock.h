@@ -13,17 +13,19 @@
 namespace nupad::clock {
     class VectorClock {
         const PeerId myPeerId_;
-        Tick tick_;
+        ClockState clockState_{/*initial_capacity*/ 10};
     public:
         explicit VectorClock(PeerId myPeerId);
 
         Tick tick();
 
-        void update(Tick tick);
+        void update(const PeerId &otherPeerId, Tick tick);
 
-        Tick getTick();
+        Tick getTick(const PeerId &peerId) const;
 
-        ClockState getState();
+        Tick getMyTick() const;
+
+        ClockState getState() const;
     };
 }
 
