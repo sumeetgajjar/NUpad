@@ -5,11 +5,13 @@
 #ifndef NUPAD_CONTEXT_H
 #define NUPAD_CONTEXT_H
 
+#include "clock.h"
 #include "operation.h"
 
 namespace nupad {
     class Context {
-        const PeerId myPeerId;
+        const PeerId myPeerId_;
+        clock::VectorClock clock_;
     public:
         explicit Context(PeerId myPeerId);
 

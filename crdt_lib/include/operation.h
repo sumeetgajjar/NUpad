@@ -60,10 +60,10 @@ namespace nupad::crdt {
 
         explicit Operation(OperationType operationType);
 
-        virtual ~Operation() = default;
-
     public:
         OperationType getOperationType() const;
+
+        virtual ~Operation() = default;
 
         friend std::ostream &operator<<(std::ostream &os, const Operation &operation);
     };

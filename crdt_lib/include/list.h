@@ -38,20 +38,30 @@ namespace nupad::crdt {
         size_t size_ = 0;
 
 
-        void applyInsertOperation(Operation &operation) {
-            auto *insertOp = dynamic_cast<InsertOperation<T> *>(&operation);
-            CHECK_NE(insertOp, nullptr) << "Cannot cast operation to InsertOperation: " << operation;
+        void applyInsertOperation(const Operation &operation) {
+            auto *insertOp = dynamic_cast<const InsertOperation<T> *>
+              (&operation);
+            CHECK_NOTNULL(insertOp);
             insertAfterId(insertOp->getPrevElementId(), insertOp->getNewElementId(), insertOp->getValue());
         }
 
-        void applyDeleteOperation(Operation &operation) {
-            auto *deleteOperation = dynamic_cast<DeleteOperation *>(&operation);
-            CHECK_NE(deleteOperation, nullptr) << "Cannot cast operation to DeleteOperation: " << operation;
-            // TODO: implement this madhur;
+        void applyDeleteOperation(const Operation &operation) {
+            auto *deleteOp = dynamic_cast<const DeleteOperation *>(&operation);
+            CHECK_NOTNULL(deleteOp);
+            CHECK(elementIdToNodeMap.find(deleteOp->getElementId()) !=
+                  elementIdToNodeMap.end())
+                  << "elementID: " << deleteOp->getElementId()
+                  << " not exists in the list";
+            Node *deleteNode = elementIdToNodeMap.at
+                                (deleteOp->getElementId());
+            deleteNode->deletionTS.emplace(deleteOp->getDeleteTS());
+            size_--;
         }
 
         Node *getNodeByIndex(const int index) {
-            CHECK_GE(index, 0) << "index cannot be negative";
+            CHECK_GE(index, 0) << "index cannot be negative: " << index;
+            CHECK_LE(index, size_) << "index cannot be greater than the size "
+                                      "of the list: " << index;
             Node *node = head;
             int distance = index;
             while (node != nullptr && (node->deletionTS.has_value() || distance > 0)) {
@@ -105,12 +115,8 @@ namespace nupad::crdt {
             return newNode;
         }
 
-        void removeAfterId(const ElementId &elementId) {
-            // TODO:// implement this madhur
-        }
-
     public:
-        DoublyLinkedList(const Context &context) : context_(context) {
+        explicit DoublyLinkedList(const Context &context) : context_(context) {
             LOG(INFO) << "DoublyLinkedList of " << typeid(T).name() << " initialized";
         }
 
@@ -128,11 +134,6 @@ namespace nupad::crdt {
         }
 
         InsertOperation<T> insert(const int index, const T &value) {
-            if (index > size_) {
-                throw std::out_of_range("List size: " + std::to_string(size_) +
-                                        ", insertion index: " + std::to_string(index) + " is out of range");
-            }
-
             std::optional<ElementId> prevElementId = std::nullopt;
             if (index > 0) {
                 Node *next = getNodeByIndex(index);
@@ -143,14 +144,19 @@ namespace nupad::crdt {
 
             std::optional<ElementId> newNodePrevElementId = std::nullopt;
             if (inserted->prev != nullptr) {
-                newNodePrevElementId.emplace(inserted->prev->insertionTS);
+              newNodePrevElementId.emplace(inserted->prev->insertionTS);
             }
 
             return InsertOperation<T>(inserted->insertionTS, inserted->value, newNodePrevElementId);
         }
 
         DeleteOperation remove(const int index) {
-            // TODO:// implement this madhur
+            Node *node = getNodeByIndex(index);
+            CHECK_NOTNULL(node);
+            auto deleteOp = DeleteOperation(node->insertionTS,
+                                            context_.getNextElementId());
+            applyDeleteOperation(deleteOp);
+            return deleteOp;
         }
 
         std::vector<T> getContents() {

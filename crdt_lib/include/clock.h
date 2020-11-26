@@ -7,21 +7,24 @@
 
 #include <types.h>
 
+#include <utility>
+
 namespace nupad::clock {
     class VectorClock {
-        static bool initialized_;
-        static PeerId myPeerId_;
-        static ClockState clockState_;
+        const PeerId myPeerId_;
+        ClockState clockState_{/*initial_capacity*/ 10};
     public:
-        static void init(PeerId myPeerId);
+        explicit VectorClock(PeerId myPeerId);
 
-        static Tick tick(Tick tick = 1);
+        Tick tick();
 
-        static void update(const PeerId &peerId, Tick tick);
+        void update(const PeerId &otherPeerId, Tick tick);
 
-        static Tick getTick(const PeerId &peerId = myPeerId_);
+        Tick getTick(const PeerId &peerId) const;
 
-        static ClockState getState();
+        Tick getMyTick() const;
+
+        ClockState getState() const;
     };
 }
 

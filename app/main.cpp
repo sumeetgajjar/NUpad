@@ -18,7 +18,6 @@ int main(int argc, char **argv) {
     FLAGS_alsologtostderr = 1;
     LOG(INFO) << "Hello world App";
     auto myPeerId = "1";
-    clock::VectorClock::init(myPeerId);
     auto context = Context(myPeerId);
     crdt::DoublyLinkedList<char> crdtList(context);
     for (int i = 0; i < 10; ++i) {

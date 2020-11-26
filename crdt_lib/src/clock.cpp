@@ -3,46 +3,40 @@
 //
 
 #include "clock.h"
-
 #include <glog/logging.h>
 
 namespace nupad::clock {
 
-    PeerId VectorClock::myPeerId_;
-    bool VectorClock::initialized_ = false;
-    ClockState VectorClock::clockState_(/*initial capacity*/ 10);
-
-    void VectorClock::init(PeerId myPeerId) {
-        CHECK(!VectorClock::initialized_) << "VectorClock already initialized";
-        myPeerId_ = std::move(myPeerId);
-        CHECK_STRNE(myPeerId_.c_str(), "") << "myPeerId cannot be empty";
+    VectorClock::VectorClock(PeerId myPeerId) : myPeerId_(std::move(myPeerId)) {
+        CHECK_NE(myPeerId_, "") << "Peer ID cannot be empty";
         clockState_[myPeerId_] = 0;
-        initialized_ = true;
         LOG(INFO) << "VectorClock initialized";
     }
 
-    Tick VectorClock::tick(const Tick tick) {
-        CHECK(initialized_) << "VectorClock not initialized";
-        clockState_.at(myPeerId_) += tick;
+    Tick VectorClock::tick() {
+        clockState_.at(myPeerId_)++;
         return clockState_.at(myPeerId_);
     }
 
-    void VectorClock::update(const PeerId &peerId, const Tick tick) {
-        CHECK(initialized_) << "VectorClock not initialized";
-        if (clockState_.find(peerId) != clockState_.end()) {
-            CHECK_LT(clockState_.at(peerId), tick)
-                << "new tick value should be strictly greater than current tick value";
+    void VectorClock::update(const PeerId &otherPeerId, const Tick tick) {
+        CHECK_NE(myPeerId_, otherPeerId) << "Cannot update my own tick";
+        if(clockState_.find(otherPeerId) != clockState_.end()) {
+           CHECK_LT(clockState_.at(otherPeerId), tick)
+            << "new tick value should be strictly greater than current tick value";
         }
-        clockState_[peerId] = tick;
+        clockState_[otherPeerId] = tick;
     }
 
-    Tick VectorClock::getTick(const PeerId &peerId) {
-        CHECK(initialized_) << "VectorClock not initialized";
+    Tick VectorClock::getTick(const PeerId &peerId) const {
+        CHECK_NE(peerId, "") << "Peer ID cannot be empty";
         return clockState_.at(peerId);
     }
 
-    ClockState VectorClock::getState() {
-        CHECK(initialized_) << "VectorClock not initialized";
+    Tick VectorClock::getMyTick() const {
+        return clockState_.at(myPeerId_);
+    }
+
+    ClockState VectorClock::getState() const {
         return ClockState(clockState_);
     }
 }
