@@ -33,3 +33,4 @@ endmacro(add_test_wrapper)
 
 add_subdirectory(app)
 add_subdirectory(crdt_lib)
+add_subdirectory(user_interface)
