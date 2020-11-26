@@ -12,17 +12,10 @@
 
 namespace nupad::clock {
     class VectorClock {
-        bool initialized_ = false;
-        PeerId myPeerId_;
+        const PeerId myPeerId_;
         Tick tick_;
     public:
-        explicit VectorClock(PeerId myPeerId) {
-          myPeerId_ = std::move(myPeerId);
-          CHECK_STRNE(myPeerId_.c_str(), "") << "myPeerId cannot be empty";
-          tick_ = 0;
-          initialized_ = true;
-          LOG(INFO) << "VectorClock initialized";
-        }
+        explicit VectorClock(PeerId myPeerId);
 
         Tick tick();
 
