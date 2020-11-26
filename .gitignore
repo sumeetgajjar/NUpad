@@ -6,6 +6,7 @@ cmake_modules
 logs
 __pycache__
 cmake
+3rdparty/install
 
 # Created by .ignore support plugin (hsz.mobi)
 ### CMake template
