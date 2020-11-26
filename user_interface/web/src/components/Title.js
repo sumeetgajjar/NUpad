@@ -8,16 +8,23 @@ class Title extends Component {
         this.state = {documentName: ""};
     }
 
+    handleOnChange = (e) => {
+        this.setState({
+            documentName: e.target.value
+        });
+    }
+
     render() {
 
         return (
             <TextField
                 label="Document Name"
                 id="outlined-margin-dense"
-                defaultValue={this.props.documentName}
-                className={this.props.classes.textField}
+                value={this.props.title}
+                className={this.props.styleClasses.textField}
                 margin="dense"
                 variant="outlined"
+                onChange={this.handleOnChange}
                 fullWidth
                 required
             />

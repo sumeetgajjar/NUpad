@@ -8,12 +8,16 @@ class Collaborators extends Component {
 
     constructor(props, context) {
         super(props, context);
-        this.chipColors = ["primary", "secondary"];
+        this.chipColors = ["primary", "secondary", "default"];
         this.chipColorIndex = 0;
+        this.editorsChipColor = {};
     }
 
-    getChipColor = () => {
-        return this.chipColors[this.chipColorIndex++ % this.chipColors.length];
+    getChipColor = (editor) => {
+        if (!(editor in this.editorsChipColor)) {
+            this.editorsChipColor[editor] = this.chipColors[this.chipColorIndex++ % this.chipColors.length];
+        }
+        return this.editorsChipColor[editor];
     }
 
     render() {
@@ -21,14 +25,14 @@ class Collaborators extends Component {
             <div>
                 <h3>Collaborators</h3>
                 <Divider/>
-                <div className={this.props.classes.editorDiv}>
+                <div className={this.props.styleClasses.editorDiv}>
                     {this.props.editors.map(editor => {
                         return (
                             <Chip
                                 avatar={<Avatar>{editor[0]}</Avatar>}
                                 label={editor}
                                 clickable
-                                color={this.getChipColor()}
+                                color={this.getChipColor(editor)}
                             />
                         );
                     })}
