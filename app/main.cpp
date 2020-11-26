@@ -11,8 +11,7 @@ int main(int argc, char **argv) {
     using namespace nupad;
     LOG(INFO) << "Hello world App";
     auto myPeerId = "1";
-    clock::VectorClock::init(myPeerId);
-    auto context = Context(myPeerId);
+    auto context = Context(myPeerId, clock::VectorClock(myPeerId));
     crdt::DoublyLinkedList<char> crdtList(context);
     for (int i = 0; i < 10; ++i) {
         crdtList.insert(i, 'a' + i);

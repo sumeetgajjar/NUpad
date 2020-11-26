@@ -21,6 +21,10 @@ protected:
   nupad::clock::VectorClock *clock_;
 };
 
+TEST(VectorInitTest, EmptyPeerIdTest) {
+  ASSERT_DEATH(nupad::clock::VectorClock(""), "myPeerId cannot be empty");
+}
+
 TEST_F(VectorClockTest, VectorClockOperations) {
     nupad::clock::ClockState expectedClockState = {{myPeerId_, 0}};
     ASSERT_EQ(clock_->getState(), expectedClockState);

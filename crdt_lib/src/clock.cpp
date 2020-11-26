@@ -8,7 +8,8 @@ namespace nupad::clock {
 
     Tick VectorClock::tick() {
         CHECK(initialized_) << "VectorClock not initialized";
-        return tick_++;
+        tick_++;
+        return tick_;
     }
 
     void VectorClock::update(const Tick tick) {

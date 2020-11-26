@@ -38,23 +38,24 @@ namespace nupad::crdt {
         size_t size_ = 0;
 
 
-        void applyInsertOperation(Operation &operation) {
-            auto *insertOp = dynamic_cast<InsertOperation<T> *>(&operation);
-            CHECK_NOTNULL(insertOp) << "Cannot cast operation to InsertOperation: " << operation;
+        void applyInsertOperation(const Operation &operation) {
+            auto *insertOp = dynamic_cast<const InsertOperation<T> *>
+              (&operation);
+            CHECK_NOTNULL(insertOp);
             insertAfterId(insertOp->getPrevElementId(), insertOp->getNewElementId(), insertOp->getValue());
         }
 
-        void applyDeleteOperation(Operation &operation) {
-            auto *deleteOperation = dynamic_cast<DeleteOperation *>(&operation);
-            // TODO: check using CHECK_NOTNULL - throwing some invalid
-            //  operation error
-            CHECK_NE(deleteOperation, nullptr) << "Cannot cast operation to DeleteOperation: " << operation;
-            CHECK(elementIdToNodeMap.find(deleteOperation->getElementId()) != elementIdToNodeMap.end())
-                  << "elementID: " << deleteOperation->getElementId()
+        void applyDeleteOperation(const Operation &operation) {
+            auto *deleteOp = dynamic_cast<const DeleteOperation *>(&operation);
+            CHECK_NOTNULL(deleteOp);
+            CHECK(elementIdToNodeMap.find(deleteOp->getElementId()) !=
+                  elementIdToNodeMap.end())
+                  << "elementID: " << deleteOp->getElementId()
                   << " not exists in the list";
             Node *deleteNode = elementIdToNodeMap.at
-                                (deleteOperation->getElementId());
-            deleteNode->deletionTS.emplace(deleteOperation->getDeleteTS());
+                                (deleteOp->getElementId());
+            deleteNode->deletionTS.emplace(deleteOp->getDeleteTS());
+            size_--;
         }
 
         Node *getNodeByIndex(const int index) {
@@ -139,21 +140,19 @@ namespace nupad::crdt {
                 prevElementId.emplace(next != nullptr ? next->prev->insertionTS : tail->insertionTS);
             }
 
-            Node *inserted = insertAfterId(prevElementId, context_.getNextElementId(), value);
-
-            std::optional<ElementId> newNodePrevElementId = std::nullopt;
-            if (inserted->prev != nullptr) {
-                newNodePrevElementId.emplace(inserted->prev->insertionTS);
-            }
-
-            return InsertOperation<T>(inserted->insertionTS, inserted->value, newNodePrevElementId);
+            auto insertOp = InsertOperation<T>(context_.getNextElementId(),
+                                               value, prevElementId);
+            applyInsertOperation(insertOp);
+            return insertOp;
         }
 
         DeleteOperation remove(const int index) {
             Node *node = getNodeByIndex(index);
-            CHECK_NOTNULL(node) << "ElementID does not exist at: " << index;
-            node->deletionTS.emplace(context_.getNextElementId());
-            return DeleteOperation(node->insertionTS, node->deletionTS);
+            CHECK_NOTNULL(node);
+            auto deleteOp = DeleteOperation(node->insertionTS,
+                                            context_.getNextElementId());
+            applyDeleteOperation(deleteOp);
+            return deleteOp;
         }
 
         std::vector<T> getContents() {

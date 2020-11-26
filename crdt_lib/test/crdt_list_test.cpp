@@ -2,9 +2,31 @@
 // Created by sumeet on 11/23/20.
 //
 
+#include "context.h"
 #include "operation.h"
 #include "test_utils.h"
 #include <gtest/gtest.h>
+
+class ContextElementIdTest : public ::testing::Test {
+protected:
+  void SetUp() override {
+    myPeerId_ = "1";
+    ctx_ = new nupad::Context(
+        myPeerId_, nupad::clock::VectorClock(myPeerId_));
+  }
+
+  void TearDown() override {
+    delete ctx_;
+  }
+
+  nupad::PeerId myPeerId_;
+  nupad::Context *ctx_;
+};
+
+TEST_F(ContextElementIdTest, ContextInitTest) {
+  nupad::crdt::ElementId expectedElementId{"1", 1};
+  ASSERT_EQ(ctx_->getNextElementId(), expectedElementId);
+}
 
 TEST(ElementIdTestSuite, NegativeTickFails) {
     ASSERT_DEATH({
