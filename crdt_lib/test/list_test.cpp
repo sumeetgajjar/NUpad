@@ -8,82 +8,71 @@
 class ListTest : public ::testing::Test {
 protected:
   void SetUp() override {
-    nupad::PeerId myPeerId_ = "1";
-    nupad::Context ctx_(myPeerId_, nupad::clock::VectorClock(myPeerId_));
-    list_ = new nupad::crdt::DoublyLinkedList<char>(ctx_);
+    nupad::PeerId peerId1 = "1";
+    nupad::Context ctx1(peerId1, nupad::clock::VectorClock(peerId1));
+    list1_ = new nupad::crdt::DoublyLinkedList<char>(ctx1);
+    nupad::PeerId peerId2 = "2";
+    nupad::Context ctx2(peerId2, nupad::clock::VectorClock(peerId2));
+    list2_ = new nupad::crdt::DoublyLinkedList<char>(ctx2);
   }
 
-  void TearDown() override { delete list_; }
+  void TearDown() override {
+    delete list1_;
+    delete list2_;
+  }
 
-  nupad::crdt::DoublyLinkedList<char> *list_;
+  nupad::crdt::DoublyLinkedList<char> *list1_;
+  nupad::crdt::DoublyLinkedList<char> *list2_;
 };
 
 TEST_F(ListTest, ListInitTest) {
-  EXPECT_TRUE(list_ != nullptr);
-  ASSERT_EQ(list_->size(), 0);
+  EXPECT_TRUE(list1_ != nullptr);
+  ASSERT_EQ(list1_->size(), 0);
   std::vector<char> expectedElements = {};
-  ASSERT_EQ(list_->getContents(), expectedElements);
+  ASSERT_EQ(list1_->getContents(), expectedElements);
 }
 
 TEST_F(ListTest, ListInsertTest) {
-  auto insertOp = list_->insert(0, 'a');
-  ASSERT_EQ(list_->size(), 1);
+  auto insertOp = list1_->insert(0, 'a');
+  ASSERT_EQ(list1_->size(), 1);
   std::vector<char> expectedElements{'a'};
-  ASSERT_EQ(list_->getContents(), expectedElements);
+  ASSERT_EQ(list1_->getContents(), expectedElements);
 }
 
 TEST_F(ListTest, ListInsertRemoveTest) {
-  nupad::crdt::Operation insertOp = list_->insert(0, 'a');
-  nupad::crdt::Operation deleteOp = list_->remove(0);
-  ASSERT_EQ(list_->size(), 0);
+  nupad::crdt::Operation insertOp = list1_->insert(0, 'a');
+  nupad::crdt::Operation deleteOp = list1_->remove(0);
+  ASSERT_EQ(list1_->size(), 0);
   std::vector<char> expectedElements{};
-  ASSERT_EQ(list_->getContents(), expectedElements);
+  ASSERT_EQ(list1_->getContents(), expectedElements);
 }
 
 TEST_F(ListTest, ListFailInsert) {
-  ASSERT_DEATH(list_->insert(1, 'a'), "index cannot be greater");
+  ASSERT_DEATH(list1_->insert(1, 'a'), "index cannot be greater");
 }
 
 TEST_F(ListTest, ListFailRemove) {
-  ASSERT_DEATH(list_->remove(1), "index cannot be greater");
+  ASSERT_DEATH(list1_->remove(1), "index cannot be greater");
 }
 
 TEST_F(ListTest, ListRemoteInsertTest) {
   // get the operation from a local insert
-  const nupad::crdt::InsertOperation insertOp = list_->insert(0, 'a');
-  nupad::PeerId remotePeerId = "2";
-  nupad::Context remote_ctx(remotePeerId, nupad::clock::VectorClock
-                          (remotePeerId));
-  auto remote_list = new nupad::crdt::DoublyLinkedList<char>(remote_ctx);
-  remote_list->apply(insertOp);
-  ASSERT_EQ(remote_list->size(), 1);
-  std::vector<char> expectedElements{'a'};
-  ASSERT_EQ(remote_list->getContents(), expectedElements);
-}
-
-TEST_F(ListTest, ListRemoteDeleteTest) {
-  // get the operation from a local insert
-  const nupad::crdt::InsertOperation insertOp = list_->insert(0, 'a');
-  const nupad::crdt::InsertOperation insertOp2 = list_->insert(0, 'b');
-  const nupad::crdt::DeleteOperation deleteOp = list_->remove(1);
-  nupad::PeerId remotePeerId = "2";
-  nupad::Context remote_ctx(remotePeerId, nupad::clock::VectorClock
-      (remotePeerId));
-  auto remote_list = new nupad::crdt::DoublyLinkedList<char>(remote_ctx);
-  // apply in the same order as above
-  remote_list->apply(insertOp);
-  remote_list->apply(insertOp2);
-  remote_list->apply(deleteOp);
-  ASSERT_EQ(remote_list->size(), 1);
-  std::vector<char> expectedElements{'b'};
-  ASSERT_EQ(remote_list->getContents(), expectedElements);
+  for(int i = 0; i < 4; i++) {
+    list1_->insert(i, 'a' + i);
+    list2_->insert(i, 'a' + i);
+  }
+  ASSERT_EQ(list1_->size(), 4);
+  ASSERT_EQ(list2_->size(), 4);
+  std::vector<char> expectedElements{'a', 'b', 'c', 'd'};
+  ASSERT_EQ(list2_->getContents(), expectedElements);
+  ASSERT_EQ(list1_->getContents(), expectedElements);
 }
 
 TEST_F(ListTest, ListInsertSameIndexTest) {
-  list_->insert(0, 'a');
-  list_->insert(1, 'b');
-  list_->insert(1, 'c');
-  ASSERT_EQ(list_->size(), 3);
+  list1_->insert(0, 'a');
+  list1_->insert(1, 'b');
+  list1_->insert(1, 'c');
+  ASSERT_EQ(list1_->size(), 3);
   std::vector<char> expectedElements{'a', 'c', 'b'};
-  ASSERT_EQ(list_->getContents(), expectedElements);
+  ASSERT_EQ(list1_->getContents(), expectedElements);
 }

@@ -140,10 +140,14 @@ namespace nupad::crdt {
                 prevElementId.emplace(next != nullptr ? next->prev->insertionTS : tail->insertionTS);
             }
 
-            auto insertOp = InsertOperation<T>(context_.getNextElementId(),
-                                               value, prevElementId);
-            applyInsertOperation(insertOp);
-            return insertOp;
+            Node *inserted = insertAfterId(prevElementId, context_.getNextElementId(), value);
+
+            std::optional<ElementId> newNodePrevElementId = std::nullopt;
+            if (inserted->prev != nullptr) {
+              newNodePrevElementId.emplace(inserted->prev->insertionTS);
+            }
+
+            return InsertOperation<T>(inserted->insertionTS, inserted->value, newNodePrevElementId);
         }
 
         DeleteOperation remove(const int index) {
