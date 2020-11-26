@@ -9,10 +9,10 @@ class ListTest : public ::testing::Test {
 protected:
   void SetUp() override {
     nupad::PeerId peerId1 = "1";
-    nupad::Context ctx1(peerId1, nupad::clock::VectorClock(peerId1));
+    nupad::Context ctx1(peerId1);
     list1_ = new nupad::crdt::DoublyLinkedList<char>(ctx1);
     nupad::PeerId peerId2 = "2";
-    nupad::Context ctx2(peerId2, nupad::clock::VectorClock(peerId2));
+    nupad::Context ctx2(peerId2);
     list2_ = new nupad::crdt::DoublyLinkedList<char>(ctx2);
   }
 

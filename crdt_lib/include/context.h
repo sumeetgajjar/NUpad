@@ -10,10 +10,10 @@
 
 namespace nupad {
     class Context {
-        const PeerId myPeerId;
+        const PeerId myPeerId_;
         clock::VectorClock clock_;
     public:
-        explicit Context(PeerId myPeerId, clock::VectorClock clock);
+        explicit Context(PeerId myPeerId);
 
         crdt::ElementId getNextElementId();
     };

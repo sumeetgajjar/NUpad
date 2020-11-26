@@ -3,6 +3,7 @@
 //
 
 #include "clock.h"
+#include <glog/logging.h>
 
 namespace nupad::clock {
 

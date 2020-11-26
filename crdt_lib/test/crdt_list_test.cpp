@@ -11,8 +11,7 @@ class ContextElementIdTest : public ::testing::Test {
 protected:
   void SetUp() override {
     myPeerId_ = "1";
-    ctx_ = new nupad::Context(
-        myPeerId_, nupad::clock::VectorClock(myPeerId_));
+    ctx_ = new nupad::Context(myPeerId_);
   }
 
   void TearDown() override {

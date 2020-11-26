@@ -5,7 +5,6 @@
 #ifndef NUPAD_CLOCK_H
 #define NUPAD_CLOCK_H
 
-#include <glog/logging.h>
 #include <types.h>
 
 #include <utility>
