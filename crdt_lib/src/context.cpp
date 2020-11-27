@@ -5,7 +5,6 @@
 #include "context.h"
 #include <glog/logging.h>
 
-#include <utility>
 
 namespace nupad {
 

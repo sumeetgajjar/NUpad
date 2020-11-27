@@ -7,8 +7,6 @@
 
 #include <types.h>
 
-#include <utility>
-
 namespace nupad::clock {
     class VectorClock {
         const PeerId myPeerId_;
@@ -16,7 +14,9 @@ namespace nupad::clock {
     public:
         explicit VectorClock(PeerId myPeerId);
 
-        Tick tick();
+        VectorClock(const VectorClock &other) = default;
+
+        Tick tick(Tick tick = 1);
 
         void update(const PeerId &otherPeerId, Tick tick);
 
@@ -25,6 +25,8 @@ namespace nupad::clock {
         Tick getMyTick() const;
 
         ClockState getState() const;
+
+        void reset();
     };
 }
 

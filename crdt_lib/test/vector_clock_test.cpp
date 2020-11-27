@@ -48,10 +48,6 @@ TEST_F(VectorClockTestSuite, VectorClockOperations) {
     ASSERT_EQ(clock_->getTick(otherPeerId), otherPeerTick + 1);
 }
 
-TEST_F(VectorClockTestSuite, UpdateOwnTickFailTest) {
-    ASSERT_DEATH(clock_->update(myPeerId_, 12), "Cannot update my own tick");
-}
-
 TEST_F(VectorClockTestSuite, UpdateFailsWithLowerTickValue) {
     nupad::PeerId otherPeerId{"2"};
     clock_->update(otherPeerId, 12);

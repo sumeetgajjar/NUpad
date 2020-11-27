@@ -5,8 +5,6 @@
 #include "operation.h"
 #include <glog/logging.h>
 
-#include <utility>
-
 namespace nupad::crdt {
 
     std::ostream &operator<<(std::ostream &os, const OperationType &operationType) {
@@ -20,6 +18,9 @@ namespace nupad::crdt {
             case ClockUpdate:
                 os << "OperationType: ClockUpdate";
                 break;
+            case ChangeProcessed:
+                os << "OperationType: ChangeProcessed";
+                break;
             default:
                 LOG(FATAL) << "Unknown OperationType encountered";
         }
@@ -29,6 +30,27 @@ namespace nupad::crdt {
     ElementId::ElementId(PeerId peerId, const nupad::clock::Tick &tick) :
             peerId_(std::move(peerId)), tick_(tick) {
         CHECK_GE(tick_, 0) << "tick cannot be negative: " << tick;
+    }
+
+    ElementId::ElementId(const ElementId &other) : peerId_(other.peerId_), tick_(other.tick_) {}
+
+    ElementId &ElementId::operator=(const ElementId &other) {
+        if (this != &other) {
+            peerId_ = other.peerId_;
+            tick_ = other.tick_;
+        }
+        return *this;
+    }
+
+
+    ElementId::ElementId(ElementId &&other) : peerId_(std::move(other.peerId_)), tick_(other.tick_) {}
+
+    ElementId &ElementId::operator=(ElementId &&other) noexcept {
+        if (this != &other) {
+            peerId_ = std::move(other.peerId_);
+            tick_ = other.tick_;
+        }
+        return *this;
     }
 
     bool ElementId::operator==(const ElementId &rhs) const {
@@ -65,7 +87,7 @@ namespace nupad::crdt {
         return peerId_;
     }
 
-    const clock::Tick ElementId::getTick() const {
+    clock::Tick ElementId::getTick() const {
         return tick_;
     }
 
@@ -86,6 +108,10 @@ namespace nupad::crdt {
         return os;
     }
 
+    std::optional<ElementId> Operation::getTimeStamp() const {
+        return std::nullopt;
+    }
+
     DeleteOperation::DeleteOperation(ElementId elementId, ElementId deleteTS)
             : Operation(Delete), elementId_(std::move(elementId)), deleteTS_(std::move(deleteTS)) {}
 
@@ -95,5 +121,25 @@ namespace nupad::crdt {
 
     const ElementId &DeleteOperation::getDeleteTS() const {
         return deleteTS_;
+    }
+
+    std::optional<ElementId> DeleteOperation::getTimeStamp() const {
+        return deleteTS_;
+    }
+
+    ClockUpdateOperation::ClockUpdateOperation(const clock::Tick nextTimestamp, clock::ClockState diff)
+            : Operation(ClockUpdate),
+              nextTimestamp_(nextTimestamp),
+              diff(std::move(diff)) {}
+
+    std::optional<ElementId> ClockUpdateOperation::getTimeStamp() const {
+        return std::nullopt;
+    }
+
+    ChangeProcessedOperation::ChangeProcessedOperation(const int changeCounter)
+            : Operation(ChangeProcessed), changeCounter(changeCounter) {}
+
+    std::optional<ElementId> ChangeProcessedOperation::getTimeStamp() const {
+        return std::nullopt;
     }
 }

@@ -5,7 +5,6 @@
 #ifndef NUPAD_OPERATION_H
 #define NUPAD_OPERATION_H
 
-#include <utility>
 #include <ostream>
 
 #include "types.h"
@@ -14,21 +13,30 @@ namespace nupad::crdt {
     enum OperationType {
         Insert = 1,
         Delete = 2,
-        ClockUpdate = 3
+        ClockUpdate = 3,
+        ChangeProcessed = 4
     };
 
     std::ostream &operator<<(std::ostream &os, const OperationType &operationType);
 
     class ElementId {
-        const PeerId peerId_;
-        const nupad::clock::Tick tick_;
+        PeerId peerId_;
+        nupad::clock::Tick tick_;
 
     public:
         ElementId(PeerId peerId, const clock::Tick &tick);
 
+        ElementId(const ElementId &other);
+
+        ElementId(ElementId &&other);
+
         const PeerId &getPeerId() const;
 
-        const clock::Tick getTick() const;
+        clock::Tick getTick() const;
+
+        ElementId &operator=(const ElementId &other);
+
+        ElementId &operator=(ElementId &&other) noexcept;
 
         bool operator<(const ElementId &rhs) const;
 
@@ -63,7 +71,7 @@ namespace nupad::crdt {
     public:
         OperationType getOperationType() const;
 
-        virtual ~Operation() = default;
+        virtual std::optional<ElementId> getTimeStamp() const;
 
         friend std::ostream &operator<<(std::ostream &os, const Operation &operation);
     };
@@ -79,9 +87,9 @@ namespace nupad::crdt {
 
         InsertOperation(ElementId elementId, const T value, std::optional<ElementId> prevElementId) :
                 Operation(Insert),
-                prevElementId_(std::move(prevElementId)),
                 newElementId_(std::move(elementId)),
-                value_(value) {}
+                value_(value),
+                prevElementId_(std::move(prevElementId)) {}
 
         const ElementId &getNewElementId() const {
             return newElementId_;
@@ -94,6 +102,10 @@ namespace nupad::crdt {
         const std::optional<ElementId> &getPrevElementId() const {
             return prevElementId_;
         }
+
+        std::optional<ElementId> getTimeStamp() const override {
+            return newElementId_;
+        }
     };
 
     class DeleteOperation : public Operation {
@@ -105,10 +117,26 @@ namespace nupad::crdt {
         const ElementId &getElementId() const;
 
         const ElementId &getDeleteTS() const;
+
+        std::optional<ElementId> getTimeStamp() const override;
     };
 
     class ClockUpdateOperation : public Operation {
 
+        const clock::Tick nextTimestamp_;
+        const clock::ClockState diff;
+    public:
+        ClockUpdateOperation(clock::Tick nextTimestamp, clock::ClockState diff);
+
+        std::optional<ElementId> getTimeStamp() const override;
+    };
+
+    class ChangeProcessedOperation : public Operation {
+        const int changeCounter;
+    public:
+        ChangeProcessedOperation(int changeCounter);
+
+        std::optional<ElementId> getTimeStamp() const override;
     };
 }
 

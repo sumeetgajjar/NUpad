@@ -9,6 +9,7 @@
 #include "operation.h"
 
 namespace nupad {
+
     class Context {
         const PeerId myPeerId_;
         clock::VectorClock clock_;

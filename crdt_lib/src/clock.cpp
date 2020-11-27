@@ -13,16 +13,17 @@ namespace nupad::clock {
         LOG(INFO) << "VectorClock initialized";
     }
 
-    Tick VectorClock::tick() {
-        clockState_.at(myPeerId_)++;
+    Tick VectorClock::tick(const Tick tick) {
+        CHECK_GT(tick, 0) << "tick should be greater than 0";
+        clockState_.at(myPeerId_) += tick;
         return clockState_.at(myPeerId_);
     }
 
     void VectorClock::update(const PeerId &otherPeerId, const Tick tick) {
-        CHECK_NE(myPeerId_, otherPeerId) << "Cannot update my own tick";
-        if(clockState_.find(otherPeerId) != clockState_.end()) {
-           CHECK_LT(clockState_.at(otherPeerId), tick)
-            << "new tick value should be strictly greater than current tick value";
+//        CHECK_NE(myPeerId_, otherPeerId) << "Cannot update my own tick";
+        if (clockState_.find(otherPeerId) != clockState_.end()) {
+            CHECK_LT(clockState_.at(otherPeerId), tick)
+                << "new tick value should be strictly greater than current tick value";
         }
         clockState_[otherPeerId] = tick;
     }
@@ -38,5 +39,9 @@ namespace nupad::clock {
 
     ClockState VectorClock::getState() const {
         return ClockState(clockState_);
+    }
+
+    void VectorClock::reset() {
+        clockState_.clear();
     }
 }

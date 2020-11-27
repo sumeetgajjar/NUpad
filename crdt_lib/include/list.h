@@ -6,8 +6,8 @@
 #define NUPAD_LIST_H
 
 #include <list>
-#include <utility>
 #include <glog/logging.h>
+#include <functional>
 
 #include "context.h"
 #include "operation.h"
@@ -32,15 +32,15 @@ namespace nupad::crdt {
                     deletionTS(std::nullopt) {}
         };
 
+        // TODO: suffix all members with _
         std::unordered_map<ElementId, Node *, ElementIdHash> elementIdToNodeMap;
         Node *head = nullptr, *tail = nullptr;
-        Context context_;
+        const std::function<ElementId(void)> nextElementIdGetter_;
         size_t size_ = 0;
 
 
         void applyInsertOperation(const Operation &operation) {
-            auto *insertOp = dynamic_cast<const InsertOperation<T> *>
-              (&operation);
+            auto *insertOp = dynamic_cast<const InsertOperation<T> *>(&operation);
             CHECK_NOTNULL(insertOp);
             insertAfterId(insertOp->getPrevElementId(), insertOp->getNewElementId(), insertOp->getValue());
         }
@@ -50,10 +50,10 @@ namespace nupad::crdt {
             CHECK_NOTNULL(deleteOp);
             CHECK(elementIdToNodeMap.find(deleteOp->getElementId()) !=
                   elementIdToNodeMap.end())
-                  << "elementID: " << deleteOp->getElementId()
-                  << " not exists in the list";
+                            << "elementID: " << deleteOp->getElementId()
+                            << " not exists in the list";
             Node *deleteNode = elementIdToNodeMap.at
-                                (deleteOp->getElementId());
+                    (deleteOp->getElementId());
             deleteNode->deletionTS.emplace(deleteOp->getDeleteTS());
             size_--;
         }
@@ -116,7 +116,14 @@ namespace nupad::crdt {
         }
 
     public:
-        explicit DoublyLinkedList(const Context &context) : context_(context) {
+        // TODO: remove this constructor
+        explicit DoublyLinkedList(Context &context) : nextElementIdGetter_(
+                [&]() { return context.getNextElementId(); }) {
+            LOG(INFO) << "DoublyLinkedList of " << typeid(T).name() << " initialized";
+        }
+
+        explicit DoublyLinkedList(std::function<ElementId(void)> nextElementIdGetter) :
+                nextElementIdGetter_(std::move(nextElementIdGetter)) {
             LOG(INFO) << "DoublyLinkedList of " << typeid(T).name() << " initialized";
         }
 
@@ -140,11 +147,11 @@ namespace nupad::crdt {
                 prevElementId.emplace(next != nullptr ? next->prev->insertionTS : tail->insertionTS);
             }
 
-            Node *inserted = insertAfterId(prevElementId, context_.getNextElementId(), value);
+            Node *inserted = insertAfterId(prevElementId, nextElementIdGetter_(), value);
 
             std::optional<ElementId> newNodePrevElementId = std::nullopt;
             if (inserted->prev != nullptr) {
-              newNodePrevElementId.emplace(inserted->prev->insertionTS);
+                newNodePrevElementId.emplace(inserted->prev->insertionTS);
             }
 
             return InsertOperation<T>(inserted->insertionTS, inserted->value, newNodePrevElementId);
@@ -153,8 +160,7 @@ namespace nupad::crdt {
         DeleteOperation remove(const int index) {
             Node *node = getNodeByIndex(index);
             CHECK_NOTNULL(node);
-            auto deleteOp = DeleteOperation(node->insertionTS,
-                                            context_.getNextElementId());
+            auto deleteOp = DeleteOperation(node->insertionTS, nextElementIdGetter_());
             applyDeleteOperation(deleteOp);
             return deleteOp;
         }
