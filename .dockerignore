@@ -1,5 +1,6 @@
 *
 
+!3rdparty/evpp
 !app
 !crdt_lib
 !server
