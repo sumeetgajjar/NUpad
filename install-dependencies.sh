@@ -9,7 +9,6 @@ fi
 
 echo "Creating cmake modules dir: '${CMAKE_MODULES_DIR}'"
 mkdir ${CMAKE_MODULES_DIR}
-conan remote add -f inexorgame "https://api.bintray.com/conan/inexorgame/inexor-conan"
 conan install . \
   --install-folder=${CMAKE_MODULES_DIR} \
   -s os=Linux \

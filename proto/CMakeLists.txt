@@ -10,7 +10,7 @@ set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/helloworld.pb.h")
 
 # runs only for one file
 add_custom_command(
-        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+        OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}"
         COMMAND ${_PROTOBUF_PROTOC}
         # grpc_out to create grpc files, cpp_out to create proto cpp files
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
