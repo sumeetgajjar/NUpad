@@ -34,21 +34,12 @@ macro(add_test_wrapper target)
     add_test(NAME ${target} COMMAND $<TARGET_FILE:${target}>)
 endmacro(add_test_wrapper)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(gflags 2.2.2 MODULE REQUIRED COMPONENTS nothreads_static)
-find_package(glog 0.4.0 MODULE REQUIRED)
-find_package(GTest 1.8.1 MODULE REQUIRED)
 ## Find Protobuf installation
 set(protobuf_MODULE_COMPATIBLE TRUE)
 find_package(protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${protobuf_VERSION}")
 set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
 find_program(_PROTOBUF_PROTOC protoc ${CONAN_BIN_DIRS_PROTOBUF} NO_DEFAULT_PATH)
-
-# Find gRPC installation
-find_package(gRPC CONFIG REQUIRED)
-message(STATUS "Using gRPC ${gRPC_VERSION}")
-
-set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 add_subdirectory(app)
 add_subdirectory(proto)

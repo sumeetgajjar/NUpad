@@ -1,11 +1,10 @@
 [requires]
 gflags/2.2.2
 glog/0.4.0
-gtest/1.8.1
-grpc/1.29.1@inexorgame/stable
+gtest/1.10.0
+protobuf/3.9.1
 
 [generators]
 cmake
 cmake_find_package
 cmake_find_package_multi
-gtest/1.10.0
