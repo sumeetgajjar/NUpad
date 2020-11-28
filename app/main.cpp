@@ -3,7 +3,7 @@
 //
 #include "clock.h"
 #include "list.h"
-#include "message.pb.h"
+#include "test1.pb.h"
 #include <glog/logging.h>
 #include <evnsq/consumer.h>
 #include <evpp/event_loop.h>
@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     }
     LOG(INFO) << "size: " << crdtList.getContents().size();
 
-    common::Message m;
+    common::Message1 m;
     m.set_id(11);
     LOG(INFO) << "Message: " << m.DebugString();
 

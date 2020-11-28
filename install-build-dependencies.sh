@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 set -e
+# Dependencies for evpp
+apt install -y --no-install-recommends libevent-dev libboost-dev
+
 CMAKE_MODULES_DIR="cmake"
 if [ -d ${CMAKE_MODULES_DIR} ]; then
   echo "Removing cmake modules dir: '${CMAKE_MODULES_DIR}'"
@@ -25,10 +28,4 @@ conan install . \
 
 # protobuf_generate_cpp in cmake uses the install protoc binary, it does not default to the
 # compiler downloaded by conan. Hence adding the symlink
-PROTOC_SYMLINK_COMMAND="ln -s $(ls ~/.conan/data/protobuf/3.12.4/_/_/package/*/bin/protoc) /usr/bin/protoc"
-if [ $(id -u) -e 0 ]
-then
-  $($PROTOC_SYMLINK_COMMAND)
-else
-  sudo $($PROTOC_SYMLINK_COMMAND)
-fi
+ln -s "$(ls ~/.conan/data/protobuf/3.12.4/_/_/package/*/bin/protoc)" /usr/bin/protoc

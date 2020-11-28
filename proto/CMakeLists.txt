@@ -1,12 +1,7 @@
-include_directories(${protobuf_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-set(PROTO_SRC_FILES message.proto)
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_FILES})
+set(PROTO_FILES test1.proto test2.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
 # Generating a placeholder target to generate the src and header files of proto files
 add_library(proto_deps OBJECT ${PROTO_SRCS} ${PROTO_HDRS})
-
-set(PROTO_SRCS ${PROTO_SRCS} PARENT_SCOPE)
-set(PROTO_HDRS ${PROTO_HDRS} PARENT_SCOPE)
-set(PROTO_HDRS_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
+target_include_directories(proto_deps PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${protobuf_INCLUDE_DIRS})
+target_link_libraries(proto_deps ${protobuf_LIBRARIES})
