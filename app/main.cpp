@@ -6,6 +6,7 @@
 #include <glog/logging.h>
 #include <evnsq/consumer.h>
 #include <evpp/event_loop.h>
+#include "app_websocket.h"
 
 int OnMessage(const evnsq::Message *msg) {
     LOG(INFO) << "Received a message, id=" << msg->id << " message=[" << msg->body.ToString() << "]";
@@ -27,6 +28,8 @@ int main(int argc, char **argv) {
         LOG(INFO) << item;
     }
     LOG(INFO) << "size: " << crdtList.getContents().size();
+
+    std::thread t1(&websocket::run_websocket_thread);
 
     std::string nsqd_tcp_addr("127.0.0.1:4150");
     evpp::EventLoop loop;
