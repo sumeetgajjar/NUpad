@@ -1,8 +1,9 @@
 //
 // Created by sumeet on 11/18/20.
 //
-#include <clock.h>
-#include <list.h>
+#include "clock.h"
+#include "list.h"
+#include "test1.pb.h"
 #include <glog/logging.h>
 #include <evnsq/consumer.h>
 #include <evpp/event_loop.h>
@@ -27,6 +28,10 @@ int main(int argc, char **argv) {
         LOG(INFO) << item;
     }
     LOG(INFO) << "size: " << crdtList.getContents().size();
+
+    common::Message1 m;
+    m.set_id(11);
+    LOG(INFO) << "Message: " << m.DebugString();
 
     std::string nsqd_tcp_addr("127.0.0.1:4150");
     evpp::EventLoop loop;

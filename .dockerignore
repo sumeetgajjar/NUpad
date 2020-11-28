@@ -3,7 +3,7 @@
 !3rdparty/evpp
 !app
 !crdt_lib
-!server
-!install-dependencies.sh
+!proto
+!install-build-dependencies.sh
 !CMakeLists.txt
 !conanfile.txt
