@@ -88,6 +88,7 @@ namespace nupad {
         auto &buffer = receiveBuffer_.at(change.getPeerId());
         // Sorting changes to maintain the total order of the changes
         std::sort(buffer.begin(), buffer.end(), [](const Change &lhs, const Change &rhs) {
+            // TODO: sort based on changeCounter
             return lhs.getTimestamp() < rhs.getTimestamp();
         });
 
@@ -132,31 +133,26 @@ namespace nupad {
 
     void Document::applyRemotePeerChanges(const PeerId &remotePeerId) {
         while (true) {
-            auto changes = receiveBuffer_.at(remotePeerId);
-            for (auto &change : changes) {
-                auto operations = change.getOperations();
-                while (!operations.empty()) {
-                    auto operation = operations.front().get();
-                    operations.pop_front();
-                    applyOperation(*operation);
-                }
-            }
+//            auto changes = receiveBuffer_.at(remotePeerId);
+//            for (auto &change : changes) {
+//                auto operations = change.getOperations();
+//                while (!operations.empty()) {
+//                    auto operation = operations.front().get();
+//                    operations.pop_front();
+//                    applyOperation(*operation);
+//                }
+//            }
         }
     }
 
     void Document::applyOperation(const crdt::Operation &operation) {
         switch (operation.getOperationType()) {
             case crdt::Insert:
-                if (clock_.getMyTick() < operation.getTimeStamp()->getTick()) {
-                    clock_.tick(operation.getTimeStamp()->getTick());
-                }
-                applyInsertOperation(dynamic_cast<const crdt::InsertOperation<char> *>(&operation));
-                break;
             case crdt::Delete:
                 if (clock_.getMyTick() < operation.getTimeStamp()->getTick()) {
                     clock_.tick(operation.getTimeStamp()->getTick());
                 }
-                applyDeleteOperation(dynamic_cast<const crdt::DeleteOperation *>(&operation));
+                list_.apply(operation);
                 break;
             case crdt::ClockUpdate:
                 applyClockUpdateOperation(dynamic_cast<const crdt::ClockUpdateOperation *>(&operation));
@@ -167,16 +163,6 @@ namespace nupad {
             default:
                 LOG(FATAL) << "Unknown operation: " << operation;
         }
-    }
-
-    void Document::applyInsertOperation(const crdt::InsertOperation<char> *insertOperation) {
-        CHECK_NOTNULL(insertOperation);
-        list_.apply(*insertOperation);
-    }
-
-    void Document::applyDeleteOperation(const crdt::DeleteOperation *deleteOperation) {
-        CHECK_NOTNULL(deleteOperation);
-        list_.apply(*deleteOperation);
     }
 
     void Document::applyClockUpdateOperation(const crdt::ClockUpdateOperation *clockUpdateOperation) {

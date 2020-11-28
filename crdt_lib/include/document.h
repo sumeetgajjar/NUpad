@@ -21,7 +21,7 @@ namespace nupad {
         crdt::ElementId timestamp_;
         int changeCount_;
         std::deque<std::shared_ptr<crdt::Operation>> operations_;
-
+//        TODO: include the remote clock update operation in change as dependencies
     public:
         Change(PeerId peerId, crdt::ElementId timestamp, int changeCount,
                const std::deque<std::shared_ptr<crdt::Operation>> &operations);
@@ -64,10 +64,6 @@ namespace nupad {
         void applyRemotePeerChanges(const PeerId &remotePeerId);
 
         void applyOperation(const crdt::Operation &operation);
-
-        void applyInsertOperation(const crdt::InsertOperation<char> *insertOperation);
-
-        void applyDeleteOperation(const crdt::DeleteOperation *deleteOperation);
 
         void applyClockUpdateOperation(const crdt::ClockUpdateOperation *clockUpdateOperation);
 
