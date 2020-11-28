@@ -21,3 +21,8 @@ services:
       - nsqlookupd  
     ports:
       - "4171:4171"
+  nupadapp:
+    image: nupad
+    command: nupad_app nsqd:4150
+    depends_on:
+      - nsqd
