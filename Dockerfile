@@ -30,8 +30,8 @@ COPY crdt_lib NUpad/crdt_lib
 
 COPY CMakeLists.txt NUpad/
 WORKDIR NUpad/build
-#RUN cmake .. && make && make test
-#
-#FROM ubuntu:18.04
-#ENV GLOG_alsologtostderr=1
-#COPY --from=buildStage /NUpad/build/bin/* /
+RUN cmake .. && make && make test
+
+FROM ubuntu:18.04
+ENV GLOG_alsologtostderr=1
+COPY --from=buildStage /NUpad/build/bin/* /

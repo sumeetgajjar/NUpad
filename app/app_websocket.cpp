@@ -40,7 +40,8 @@ void run_websocket_thread() {
 
     // Register our message handler
     echo_server.set_message_handler(bind(&on_message, &echo_server,
-                                         websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+                                         websocketpp::lib::placeholders::_1,
+                                         websocketpp::lib::placeholders::_2));
 
     // Listen on port 9002
     echo_server.listen(9002);
