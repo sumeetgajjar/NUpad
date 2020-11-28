@@ -22,3 +22,13 @@ conan install . \
   -s compiler.libcxx=libstdc++11 \
   -s build_type=Release \
   -s cppstd=17
+
+# protobuf_generate_cpp in cmake uses the install protoc binary, it does not default to the
+# compiler downloaded by conan. Hence adding the symlink
+PROTOC_SYMLINK_COMMAND="ln -s $(ls ~/.conan/data/protobuf/3.12.4/_/_/package/*/bin/protoc) /usr/bin/protoc"
+if [ $(id -u) -e 0 ]
+then
+  $($PROTOC_SYMLINK_COMMAND)
+else
+  sudo $($PROTOC_SYMLINK_COMMAND)
+fi
