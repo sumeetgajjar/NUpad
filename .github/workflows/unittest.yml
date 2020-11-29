@@ -7,13 +7,14 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:
-          - submodules: recursive
+          submodules: recursive
       - name: build
         run: docker build -t nupad .
       - name: test
