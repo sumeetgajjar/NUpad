@@ -1,0 +1,20 @@
+name: build and run tests
+on:
+  push:
+    branches:
+      - master
+      - concurrency-support
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          - submodules: recursive
+      - name: build
+        run: docker build -t nupad .
+      - name: test
+        run: docker run nupad run_all_tests
