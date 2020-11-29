@@ -34,7 +34,10 @@ int main(int argc, char **argv) {
     m.set_id(11);
     LOG(INFO) << "Message: " << m.DebugString();
 
-    std::thread t1(&websocket::run_websocket_thread);
+    // TODO: make it global here?
+    std::string server_name = "nupad_app";
+    websocket::MainWebsocketServer mainServer{server_name};
+    std::thread t1(&websocket::MainWebsocketServer::run, &mainServer, 9002);
 
     std::string nsqd_tcp_addr("127.0.0.1:4150");
     nsqd_tcp_addr = "127.0.0.1:4150";
