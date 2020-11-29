@@ -2,6 +2,7 @@
 gflags/2.2.2
 glog/0.4.0
 gtest/1.10.0
+protobuf/3.12.4
 websocketpp/[>= 0.8.2]
 
 [options]
