@@ -1,4 +1,4 @@
-name: build and run tests
+name: unittest
 on:
   push:
     branches:
@@ -9,7 +9,7 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  build:
+  unittest:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
