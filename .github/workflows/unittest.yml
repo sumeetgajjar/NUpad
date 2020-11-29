@@ -2,11 +2,11 @@ name: build and run tests
 on:
   push:
     branches:
-      - master
+      - main
       - concurrency-support
   pull_request:
     branches:
-      - master
+      - main
 jobs:
   build:
     runs-on: ubuntu-18.04
