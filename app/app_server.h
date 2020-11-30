@@ -2,20 +2,26 @@
 // Created by madhurjain on 11/28/20.
 //
 
-#ifndef NUPAD_APP_APP_WEBSOCKET_H_
-#define NUPAD_APP_APP_WEBSOCKET_H_
+#ifndef NUPAD_APP_APP_SERVER_H_
+#define NUPAD_APP_APP_SERVER_H_
 
 #include <iostream>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <set>
 
-namespace websocket {
+namespace nupad::app {
 using websocketpp::connection_hdl;
 using websocketpp::lib::bind;
 typedef websocketpp::server<websocketpp::config::asio> server;
 
-class MainWebsocketServer {
+struct DocumentThreads {
+  std::string peerName;
+  std::thread push_to_nsqd;
+  std::thread consume_from_nsqd;
+};
+
+class AppServer {
 
     private:
     // cannot use unordered_map here because of owner_less comparator for shared objects
@@ -28,7 +34,7 @@ class MainWebsocketServer {
     std::uint32_t peerCounter_;
 
     public:
-    explicit MainWebsocketServer(std::string &server_name);
+    explicit AppServer(std::string &server_name);
 
     void onOpen(connection_hdl hdl);
 
@@ -41,6 +47,6 @@ class MainWebsocketServer {
     void init_document_for_connection(const std::string &docName, const std::string& peerId);
 };
 
-} // namespace websocket
+} // namespace nupad::app
 
-#endif // NUPAD_APP_APP_WEBSOCKET_H_
+#endif // NUPAD_APP_APP_SERVER_H_

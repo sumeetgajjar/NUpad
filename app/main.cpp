@@ -3,16 +3,8 @@
 //
 #include "clock.h"
 #include "list.h"
-#include "test1.pb.h"
 #include <glog/logging.h>
-#include <evnsq/consumer.h>
-#include <evpp/event_loop.h>
-#include "app_websocket.h"
-
-int OnMessage(const evnsq::Message *msg) {
-    LOG(INFO) << "Received a message, id=" << msg->id << " message=[" << msg->body.ToString() << "]";
-    return 0;
-}
+#include "app_server.h"
 
 int main(int argc, char **argv) {
     using namespace nupad;
@@ -36,24 +28,6 @@ int main(int argc, char **argv) {
 
     // TODO: make it global here?
     std::string server_name = "nupad_app";
-    websocket::MainWebsocketServer mainServer{server_name};
-    std::thread t1(&websocket::MainWebsocketServer::run, &mainServer, 9002);
-
-    std::string nsqd_tcp_addr("127.0.0.1:4150");
-    nsqd_tcp_addr = "127.0.0.1:4150";
-    std::string lookupd_http_url("http://127.0.0.1:4161/lookup?topic=test");
-
-    if (argc == 2) {
-        if (strncmp(argv[1], "http", 4) == 0) {
-            lookupd_http_url = argv[1];
-        } else {
-            nsqd_tcp_addr = argv[1];
-        }
-    }
-
-    evpp::EventLoop loop;
-    evnsq::Consumer client(&loop, "test", "ch1", evnsq::Option());
-    client.SetMessageCallback(&OnMessage);
-    client.ConnectToNSQDs(nsqd_tcp_addr);
-    loop.Run();
+    nupad::app::AppServer appServer{server_name};
+    appServer.run(9002);
 }
