@@ -5,6 +5,7 @@
 #include "list.h"
 #include <glog/logging.h>
 #include "app_server.h"
+DEFINE_string(nsqd, "127.0.0.1", "The address of nsqd to connect to");
 
 int main(int argc, char **argv) {
     using namespace nupad;
@@ -28,6 +29,6 @@ int main(int argc, char **argv) {
 
     // TODO: make it global here?
     std::string server_name = "nupad_app";
-    nupad::app::AppServer appServer{server_name};
+    nupad::app::AppServer appServer{server_name, FLAGS_nsqd};
     appServer.run(9002);
 }

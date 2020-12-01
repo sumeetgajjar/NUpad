@@ -3,12 +3,36 @@
 //
 #include <glog/logging.h>
 #include <utility>
+#include <evnsq/consumer.h>
+#include <evpp/event_loop.h>
+#include <evnsq/producer.h>
 #include "app_server.h"
 
 namespace nupad::app {
 
-AppServer::AppServer(std::string& server_name) :
-    serverName_(std::move(server_name)), peerCounter_(0) {
+void AppServer::initConsumeFromNsqd(const std::string& docName, const std::string &channelName) {
+    evpp::EventLoop loop;
+    evnsq::Consumer client(&loop, docName, channelName, evnsq::Option());
+    // the OnMessage callback will call the document.processChange() method
+    // and then create a PROTO message for the UI with document.getContents()
+    //client.SetMessageCallback(&OnMessage);
+    client.ConnectToNSQDs(nsqdAddr_);
+    loop.Run();
+}
+
+// TODO: need the UIinput proto message here as well
+void AppServer::initPushToNsqd(const std::string& docName) {
+    evpp::EventLoop loop;
+    evnsq::Producer producer(&loop, evnsq::Option());
+    producer.SetReadyCallback([&]{
+        // call publish topic method here
+        producer.Publish(docName, "test message");
+    });
+    producer.ConnectToNSQD(nsqdAddr_);
+}
+
+AppServer::AppServer(std::string& serverName, std::string& nsqdAddr) :
+    serverName_(std::move(serverName)), peerCounter_(0), nsqdAddr_(std::move(nsqdAddr)) {
     using websocketpp::lib::placeholders::_1;
     using websocketpp::lib::placeholders::_2;
     mainServer_.init_asio();
@@ -41,8 +65,10 @@ void AppServer::onMessage(connection_hdl hdl,
     auto it = connections_.find(hdl);
     if(it != connections_.end()) {
         // for now the payload will only contain the doc name as a string
+        // there could be multiple incoming messages, switch case for the type
         LOG(INFO) << "received message: " << message_ptr->get_payload();
-        init_document_for_connection(message_ptr->get_payload(), connections_.at(hdl));
+        initDocumentForConnection(message_ptr->get_payload(),
+                                  connections_.at(hdl));
     }
 }
 
@@ -52,7 +78,10 @@ void AppServer::run(uint32_t port) {
     mainServer_.start_accept();
     mainServer_.run();
 }
-void AppServer::init_document_for_connection(const std::string &docName, const std::string& peerId) {
+void AppServer::initDocumentForConnection(const std::string &docName, const std::string& peerId) {
     // TODO: need to implement this
+    // store the thread ref in the struct defined
+    std::thread t1(initConsumeFromNsqd, docName, peerId);
+    std::thread t2(initPushToNsqd, docName, peerId);
 }
 } // namespace nupad::app

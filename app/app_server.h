@@ -32,9 +32,14 @@ class AppServer {
     con_list connections_;
     std::string serverName_;
     std::uint32_t peerCounter_;
+    std::string nsqdAddr_;
+
+    void initConsumeFromNsqd(const std::string& docName, const std::string &channelName);
+
+    void initPushToNsqd(const std::string& docName);
 
     public:
-    explicit AppServer(std::string &server_name);
+    explicit AppServer(std::string &serverName, std::string &nsqdAddr);
 
     void onOpen(connection_hdl hdl);
 
@@ -44,7 +49,7 @@ class AppServer {
 
     void run(uint32_t port);
 
-    void init_document_for_connection(const std::string &docName, const std::string& peerId);
+    void initDocumentForConnection(const std::string &docName, const std::string& peerId);
 };
 
 } // namespace nupad::app
