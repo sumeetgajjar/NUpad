@@ -81,7 +81,7 @@ void AppServer::run(uint32_t port) {
 void AppServer::initDocumentForConnection(const std::string &docName, const std::string& peerId) {
     // TODO: need to implement this
     // store the thread ref in the struct defined
-    std::thread t1(initConsumeFromNsqd, docName, peerId);
-    std::thread t2(initPushToNsqd, docName, peerId);
+    std::thread t1(&AppServer::initConsumeFromNsqd, this, docName, peerId);
+    std::thread t2(&AppServer::initPushToNsqd, this, docName);
 }
 } // namespace nupad::app
