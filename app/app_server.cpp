@@ -72,6 +72,7 @@ AppServer::AppServer(std::string serverName, std::string nsqdAddr) :
 void AppServer::onOpen(connection_hdl hdl) {
     LOG(INFO) << "Got a new connection: ";
     peerCounter_++;
+    // TODO: add connection_hdl parameter -- throwing error regarding `operator=`
     docConn_[hdl] = {.initialized = false, .peerName = serverName_ + std::to_string(peerCounter_)};
     LOG(INFO) << "Size of m connections; " << docConn_.size();
 }
