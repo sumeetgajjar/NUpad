@@ -15,6 +15,10 @@ public:
     static void init(int argc, char **argv);
 
     static int getRandomInt(int min = 0, int max = INT32_MAX);
+
+    static char getRandomChar();
+
+    static std::default_random_engine getRandomEngine();
 };
 
 #endif //NUPAD_TESTUTILS_H

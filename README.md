@@ -1,3 +1,5 @@
+![build and run tests](https://github.com/sumeetgajjar/NUpad/workflows/build%20and%20run%20tests/badge.svg)
+
 # NUpad
 This repository contains implementation of a Conflict Free Replicated JSON datatype.
 

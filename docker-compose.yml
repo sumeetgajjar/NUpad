@@ -26,3 +26,10 @@ services:
     command: nupad_app nsqd:4150
     depends_on:
       - nsqd
+  nupadwebui:
+    image: nupad
+    command: nginx
+    ports:
+    - "8080:80"
+    depends_on:
+      - nupadapp

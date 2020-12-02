@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package common;
-
-message Message1 {
-  int32 id = 1;
-}

@@ -21,6 +21,7 @@ class Document extends Component {
             username: null,
             content: "",
             title: "",
+            // TODO: implement this as a set
             editors: [],
             showWarning: false,
             warningMessage: ""
