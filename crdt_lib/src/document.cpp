@@ -137,4 +137,8 @@ namespace nupad {
     size_t Document::size() {
         return list_.size();
     }
+
+    std::string Document::getName() {
+        return name_;
+    }
 }

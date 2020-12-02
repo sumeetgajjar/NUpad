@@ -57,6 +57,8 @@ namespace nupad {
         common::Change getChange();
 
         void processChange(common::Change &change);
+
+        std::string getName();
     };
 }
 

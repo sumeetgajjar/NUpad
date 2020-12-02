@@ -9,16 +9,20 @@
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <set>
+#include <document.h>
 
 namespace nupad::app {
 using websocketpp::connection_hdl;
 using websocketpp::lib::bind;
 typedef websocketpp::server<websocketpp::config::asio> server;
 
-struct DocumentThreads {
+struct DocHandle {
+  bool initialized;
   std::string peerName;
-  std::thread push_to_nsqd;
-  std::thread consume_from_nsqd;
+  nupad::Document *doc;
+  std::mutex *docMutex;
+  std::thread* changeConsumer;
+  connection_hdl connHdl;
 };
 
 class AppServer {
@@ -26,20 +30,20 @@ class AppServer {
     private:
     // cannot use unordered_map here because of owner_less comparator for shared objects
     // https://stackoverflow.com/questions/31378130/c11-unordered-set-with-stdowner-less-like-hashing
-    typedef std::map<connection_hdl, std::string, std::owner_less<connection_hdl>>
-      con_list;
-    server mainServer_;
-    con_list connections_;
+    typedef std::map<connection_hdl, DocHandle, std::owner_less<connection_hdl>>
+      documentConnectionMap;
+    server server_;
+    documentConnectionMap docConn_;
     std::string serverName_;
     std::uint32_t peerCounter_;
     std::string nsqdAddr_;
 
-    void initConsumeFromNsqd(const std::string& docName, const std::string &channelName);
+    void initChangeConsumer(DocHandle& docHandle);
 
-    void initPushToNsqd(const std::string& docName);
+    void initChangeProducer(const std::string& docName);
 
     public:
-    explicit AppServer(std::string &serverName, std::string &nsqdAddr);
+    explicit AppServer(std::string serverName, std::string nsqdAddr);
 
     void onOpen(connection_hdl hdl);
 
@@ -49,7 +53,9 @@ class AppServer {
 
     void run(uint32_t port);
 
-    void initDocumentForConnection(const std::string &docName, const std::string& peerId);
+    void initializeDocHandle(const std::string &rawJsonMessage, DocHandle& docHolder);
+    void sendMessage(connection_hdl hdl, const std::string &message);
+    void processUIInput(const std::string &rawJson, DocHandle &docHandle);
 };
 
 } // namespace nupad::app

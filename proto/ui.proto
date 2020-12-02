@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package nupad.ui;
+
+import "common.proto";
+
+enum UIMessageType {
+  NONE = 0;
+  INIT_REQUEST = 1;
+  INIT_RESPONSE = 2;
+  UI_INPUT = 3;
+  RESPONSE = 4;
+}
+
+message UIInput {
+  UIMessageType message_type = 1;
+  int64 index = 2;
+  string value = 3;
+  common.OperationType operation_type = 4;
+}
+
+message Response {
+  UIMessageType message_type = 1;
+  string contents = 2;
+  string modified_by = 3;
+}
+
+message InitRequest {
+  UIMessageType message_type = 1;
+  string document_name = 2;
+  string username = 3;
+}
+
+message InitResponse {
+  UIMessageType message_type = 1;
+  string peer_name = 2;
+}
+
