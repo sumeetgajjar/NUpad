@@ -1,0 +1,20 @@
+name: unittest
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  unittest:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: build
+        run: docker build -t nupad .
+      - name: test
+        run: docker run nupad run_all_tests

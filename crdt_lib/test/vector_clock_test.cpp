@@ -13,20 +13,22 @@ protected:
     }
 
     void TearDown() override {
-      delete clock_;
+        delete clock_;
     }
 
-  nupad::PeerId myPeerId_;
-  nupad::clock::VectorClock *clock_;
+    nupad::PeerId myPeerId_;
+    nupad::clock::VectorClock *clock_;
 };
 
 TEST(VectorInitTest, EmptyPeerIdTest) {
-  ASSERT_DEATH(nupad::clock::VectorClock(""), "Peer ID cannot be empty");
+    ASSERT_DEATH(nupad::clock::VectorClock(""), "Peer ID cannot be empty");
 }
 
 TEST_F(VectorClockTestSuite, VectorClockOperations) {
     nupad::clock::ClockState expectedClockState = {{myPeerId_, 0}};
     ASSERT_EQ(clock_->getState(), expectedClockState);
+
+    ASSERT_EQ(clock_->getTick("random peer id which does not exists"), 0);
 
     clock_->tick();
     expectedClockState = {{myPeerId_, 1}};

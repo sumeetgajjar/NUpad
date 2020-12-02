@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package nupad.common;
+
+message Tick {
+  int64 value = 1;
+}
+
+message ID {
+  string peer_id = 1;
+  Tick tick = 2;
+}
+
+enum OperationType {
+  NONE = 0;
+  INSERT = 1;
+  DELETE = 2;
+}
+
+message InsertOperation {
+  ID new_element_id = 1;
+  string value = 2;
+  oneof prev {
+    ID prev_element_id = 3;
+  }
+}
+
+message DeleteOperation {
+  ID element_id = 1;
+  ID delete_timestamp = 2;
+}
+
+message Operation {
+  ID operation_id = 1;
+  ID timestamp = 2;
+  OperationType operation_type = 3;
+  oneof operation {
+    InsertOperation insert_operation = 4;
+    DeleteOperation delete_operation = 5;
+  }
+}
+
+message Change {
+  ID change_id = 1;
+  map<string, Tick> dependencies = 2;
+  repeated Operation operations = 3;
+}
