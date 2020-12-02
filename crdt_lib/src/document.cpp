@@ -5,173 +5,136 @@
 #include "document.h"
 
 #include <algorithm>
+#include <utility>
 
 namespace nupad {
 
-    Change::Change(PeerId peerId, crdt::ElementId timestamp, const int changeCount,
-                   const std::deque<std::shared_ptr<crdt::Operation>> &operations) :
-            peerId_(std::move(peerId)),
-            timestamp_(std::move(timestamp)),
-            changeCount_(changeCount),
-            operations_(operations.begin(), operations.end()) {}
-
-    Change::Change(Change &&other) :
-            peerId_(std::move(other.peerId_)),
-            timestamp_(other.timestamp_),
-            changeCount_(other.changeCount_),
-            operations_(std::move(other.operations_)) {
-    }
-
-    const PeerId &Change::getPeerId() const {
-        return peerId_;
-    }
-
-    const crdt::ElementId &Change::getTimestamp() const {
-        return timestamp_;
-    }
-
-    int Change::getChangeCount() const {
-        return changeCount_;
-    }
-
-    std::deque<std::shared_ptr<crdt::Operation>> &Change::getOperations() {
-        return operations_;
-    }
-
-    Change &Change::operator=(Change &&other) noexcept {
-        if (this != &other) {
-            peerId_ = std::move(other.peerId_);
-            timestamp_ = std::move(other.timestamp_);
-            operations_ = std::move(other.operations_);
-        }
-        return *this;
-    }
-
     Document::Document(PeerId peerId, std::string name) :
-            peerId_(std::move(peerId)), name_(std::move(name)),
-            clock_(peerId_), localClockUpdate_(peerId_), nextTimestampByPeerId_(peerId),
-            list_([&]() { return this->getNextElementId(); }) {
-        changeCounters_.insert(std::make_pair(peerId_, clock::VectorClock(peerId_)));
+            peerId_(std::move(peerId)), name_(std::move(name)), logicalTS_(0),
+            changeClock_(peerId_), list_([&]() { return this->getNextElementId(); }) {
+        bufferedChange_ = new common::Change;
+        LOG(INFO) << "Document: " << name_ << " initialized";
     }
 
-    void Document::insert(int index, char value) {
-        auto insertOp = list_.insert(index, value);
-        addClockUpdateToChanges();
-        operations_.push_back(std::make_shared<crdt::Operation>(insertOp));
+    void Document::insert(const int index, const char value) {
+        insert(index, std::string{value});
     }
 
-    void Document::remove(int index) {
-        auto deleteOp = list_.remove(index);
-        addClockUpdateToChanges();
-        operations_.push_back(std::make_shared<crdt::Operation>(deleteOp));
+    void Document::insert(const int index, const std::string &value) {
+        auto *opPtr = bufferedChange_->add_operations();
+        list_.insert(index, value, opPtr);
+    }
+
+    void Document::remove(const int index) {
+        auto *opPtr = bufferedChange_->add_operations();
+        list_.remove(index, opPtr);
     }
 
     bool Document::hasChange() {
-        return !operations_.empty();
+        return bufferedChange_->operations_size() != 0;
     }
 
-    Change Document::getChange() {
-        addClockUpdateToChanges();
-        auto changeCount = changeCounters_.at(peerId_).tick();
-        auto message = Change(peerId_, getNextElementId(), changeCount, operations_);
-        operations_.clear();
-        return message;
-    }
+    common::Change Document::getChange() {
+        CHECK(hasChange()) << "getChange called when no document has no changes";
+        bufferedChange_->mutable_change_id()->set_peer_id(peerId_);
+        bufferedChange_->mutable_change_id()->mutable_tick()->set_value(changeClock_.getMyTick() + 1);
 
-    void Document::processChange(Change &change) {
-        change.getOperations().push_back(
-                std::make_shared<crdt::Operation>(crdt::ChangeProcessedOperation(change.getChangeCount())));
-
-        if (receiveBuffer_.find(change.getPeerId()) == receiveBuffer_.end()) {
-            receiveBuffer_[change.getPeerId()] = std::vector<Change>();
+        for (const auto &pair: changeClock_.getState()) {
+            common::Tick tick;
+            tick.set_value(pair.second);
+            (*bufferedChange_->mutable_dependencies())[pair.first] = tick;
         }
-        auto &buffer = receiveBuffer_.at(change.getPeerId());
+
+        common::Change change(*bufferedChange_);
+        changeClock_.tick();
+
+        delete bufferedChange_;
+        bufferedChange_ = new common::Change;
+        return change;
+    }
+
+    void Document::processChange(common::Change &change) {
+        // TODO: test applying same chaanges
+        CHECK(change.has_change_id()) << "change id not present";
+        CHECK_GT(change.operations_size(), 0) << "change should contain at least one operation";
+        auto const &changeId = change.change_id();
+        if (isDuplicateChange(changeId)) {
+            LOG(WARNING) << "Duplicate Change, changeId: " << changeId
+                         << ", operation Count: " << change.operations_size();
+            return;
+        }
+
+        if (receiveBuffer_.find(changeId.peer_id()) == receiveBuffer_.end()) {
+            receiveBuffer_[changeId.peer_id()] = std::deque<common::Change>();
+        }
+        auto &buffer = receiveBuffer_.at(changeId.peer_id());
+        buffer.push_back(change);
         // Sorting changes to maintain the total order of the changes
-        std::sort(buffer.begin(), buffer.end(), [](const Change &lhs, const Change &rhs) {
-            // TODO: sort based on changeCounter
-            return lhs.getTimestamp() < rhs.getTimestamp();
+        // TODO: test if being sorted
+        std::sort(buffer.begin(), buffer.end(), [](const common::Change &lhs, const common::Change &rhs) {
+            return lhs.change_id() < rhs.change_id();
         });
 
-        applyCasuallyReadyChanges();
+        applyAllCasuallyReadyChange();
     }
 
-    void Document::addClockUpdateToChanges() {
-        if (!localClockUpdate_.getState().empty()) {
-            crdt::ClockUpdateOperation clockUpdateOperation(nextTimestampByPeerId_.getMyTick(),
-                                                            localClockUpdate_.getState());
-            operations_.push_back(std::make_shared<crdt::Operation>(clockUpdateOperation));
-            localClockUpdate_.reset();
-            localClockUpdate_.tick(nextTimestampByPeerId_.getMyTick());
+    common::ID Document::getNextElementId() {
+        common::ID nextElementId;
+        nextElementId.set_peer_id(peerId_);
+        nextElementId.mutable_tick()->set_value(++logicalTS_);
+        return nextElementId;
+    }
+
+    void Document::applyAllCasuallyReadyChange() {
+        for (auto &pair: receiveBuffer_) {
+            const auto &peerId = pair.first;
+            auto &changeDeque = pair.second;
+            while (!changeDeque.empty() && isCausallyReady(changeDeque.front())) {
+                auto &change = changeDeque.front();
+                const auto &changeId = change.change_id();
+                CHECK_EQ(peerId, changeId.peer_id());
+                applyChange(change);
+                appliedChangeIDs.insert(changeId);
+                changeClock_.update(changeId.peer_id(), changeId.tick().value());
+                changeDeque.pop_front();
+            }
         }
     }
 
-    crdt::ElementId Document::getNextElementId() {
-        return crdt::ElementId(peerId_, this->clock_.tick());
-    }
+    bool Document::isCausallyReady(const common::Change &change) {
+        const auto &dependencies = change.dependencies();
+        for (const auto &pair: dependencies) {
+            const auto &peerId = pair.first;
+            const auto &minTickRequired = pair.second;
+            if (changeClock_.getTick(peerId) < minTickRequired.value()) {
+                return false;
+            }
+        }
 
-    void Document::applyCasuallyReadyChanges() {
-        std::optional<PeerId> causallyReadyPeer = std::nullopt;
-        do {
-            causallyReadyPeer = getCasuallyReadyPeer();
-
-        } while (causallyReadyPeer.has_value());
-    }
-
-    bool Document::isCausallyReady(const PeerId &peerId) {
-        // TODO: implement this
         return true;
     }
 
-    std::optional<PeerId> Document::getCasuallyReadyPeer() {
-        for (const auto &pair: receiveBuffer_) {
-            if (isCausallyReady(pair.first) && !pair.second.empty()) {
-                return std::make_optional<PeerId>(pair.first);
-            }
-        }
-        return std::nullopt;
+    bool Document::isDuplicateChange(const common::ID &changeId) {
+        return appliedChangeIDs.find(changeId) != appliedChangeIDs.end();
     }
 
-    void Document::applyRemotePeerChanges(const PeerId &remotePeerId) {
-        while (true) {
-//            auto changes = receiveBuffer_.at(remotePeerId);
-//            for (auto &change : changes) {
-//                auto operations = change.getOperations();
-//                while (!operations.empty()) {
-//                    auto operation = operations.front().get();
-//                    operations.pop_front();
-//                    applyOperation(*operation);
-//                }
-//            }
+    void Document::applyChange(common::Change &change) {
+        for (const auto &operation: change.operations()) {
+            logicalTS_ = std::max(logicalTS_, operation.timestamp().tick().value());
+            list_.apply(operation);
         }
     }
 
-    void Document::applyOperation(const crdt::Operation &operation) {
-        switch (operation.getOperationType()) {
-            case crdt::Insert:
-            case crdt::Delete:
-                if (clock_.getMyTick() < operation.getTimeStamp()->getTick()) {
-                    clock_.tick(operation.getTimeStamp()->getTick());
-                }
-                list_.apply(operation);
-                break;
-            case crdt::ClockUpdate:
-                applyClockUpdateOperation(dynamic_cast<const crdt::ClockUpdateOperation *>(&operation));
-                break;
-            case crdt::ChangeProcessed:
-                applyChangeProcessedOperation(dynamic_cast<const crdt::ChangeProcessedOperation *>(&operation));
-                break;
-            default:
-                LOG(FATAL) << "Unknown operation: " << operation;
+    std::string Document::getString() {
+        std::string contents;
+        contents.reserve(list_.size());
+        for (auto const &ch: list_.getContents()) {
+            contents += ch;
         }
+        return contents;
     }
 
-    void Document::applyClockUpdateOperation(const crdt::ClockUpdateOperation *clockUpdateOperation) {
-        CHECK_NOTNULL(clockUpdateOperation);
-
-    }
-
-    void Document::applyChangeProcessedOperation(const crdt::ChangeProcessedOperation *changeProcessedOperation) {
-        CHECK_NOTNULL(changeProcessedOperation);
-
+    size_t Document::size() {
+        return list_.size();
     }
 }

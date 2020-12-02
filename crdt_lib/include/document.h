@@ -9,78 +9,54 @@
 #include <vector>
 #include <deque>
 #include <memory>
+#include <unordered_set>
 #include "list.h"
+#include "clock.h"
 #include "types.h"
-#include "context.h"
-#include "operation.h"
+#include "common.pb.h"
 
 namespace nupad {
-
-    class Change {
-        PeerId peerId_;
-        crdt::ElementId timestamp_;
-        int changeCount_;
-        std::deque<std::shared_ptr<crdt::Operation>> operations_;
-//        TODO: include the remote clock update operation in change as dependencies
-    public:
-        Change(PeerId peerId, crdt::ElementId timestamp, int changeCount,
-               const std::deque<std::shared_ptr<crdt::Operation>> &operations);
-
-        Change(Change &&other);
-
-        Change &operator=(Change &&other) noexcept;
-
-        const PeerId &getPeerId() const;
-
-        const crdt::ElementId &getTimestamp() const;
-
-        int getChangeCount() const;
-
-        std::deque<std::shared_ptr<crdt::Operation>> &getOperations();
-    };
 
     class Document {
         const PeerId peerId_;
         const std::string name_;
-        clock::VectorClock clock_;
-        clock::VectorClock localClockUpdate_;
-        clock::VectorClock nextTimestampByPeerId_;
-        crdt::DoublyLinkedList<char> list_;
+        clock::Tick logicalTS_;
+        clock::VectorClock changeClock_;
+        crdt::DoublyLinkedList list_;
 
-        std::deque<std::shared_ptr<crdt::Operation>> operations_;
-        std::unordered_map<PeerId, std::vector<Change>> receiveBuffer_;
-        std::unordered_map<PeerId, clock::VectorClock> changeCounters_;
+        std::unordered_set<common::ID, common::IDHash> appliedChangeIDs;
 
-        void addClockUpdateToChanges();
+        common::Change *bufferedChange_;
+        std::unordered_map<PeerId, std::deque<common::Change>> receiveBuffer_;
 
-        crdt::ElementId getNextElementId();
+        common::ID getNextElementId();
 
-        std::optional<PeerId> getCasuallyReadyPeer();
+        bool isCausallyReady(const common::Change &change);
 
-        bool isCausallyReady(const PeerId &peerId);
+        void applyAllCasuallyReadyChange();
 
-        void applyCasuallyReadyChanges();
+        void applyChange(common::Change &change);
 
-        void applyRemotePeerChanges(const PeerId &remotePeerId);
-
-        void applyOperation(const crdt::Operation &operation);
-
-        void applyClockUpdateOperation(const crdt::ClockUpdateOperation *clockUpdateOperation);
-
-        void applyChangeProcessedOperation(const crdt::ChangeProcessedOperation *changeProcessedOperation);
+        bool isDuplicateChange(const common::ID &changeId);
 
     public:
         Document(PeerId peerId, std::string name);
 
         void insert(int index, char value);
 
+        void insert(int index, const std::string &value);
+
         void remove(int index);
+
+        std::string getString();
+
+        size_t size();
 
         bool hasChange();
 
-        Change getChange();
+        common::Change getChange();
 
-        void processChange(Change &change);
+        void processChange(common::Change &change);
     };
 }
 

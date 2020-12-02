@@ -18,6 +18,8 @@ namespace nupad::clock {
 
         Tick tick(Tick tick = 1);
 
+        bool hasTick(const PeerId &peerId) const;
+
         void update(const PeerId &otherPeerId, Tick tick);
 
         Tick getTick(const PeerId &peerId) const;
@@ -25,8 +27,6 @@ namespace nupad::clock {
         Tick getMyTick() const;
 
         ClockState getState() const;
-
-        void reset();
     };
 }
 
