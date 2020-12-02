@@ -9,7 +9,7 @@ enum UIMessageType {
   INIT_REQUEST = 1;
   INIT_RESPONSE = 2;
   UI_INPUT = 3;
-  RESPONSE = 4;
+  REMOTE_CHANGE = 4;
 }
 
 message UIInput {
@@ -19,7 +19,7 @@ message UIInput {
   common.OperationType operation_type = 4;
 }
 
-message Response {
+message RemoteChange {
   UIMessageType message_type = 1;
   string contents = 2;
   string modified_by = 3;
@@ -28,7 +28,6 @@ message Response {
 message InitRequest {
   UIMessageType message_type = 1;
   string document_name = 2;
-  string username = 3;
 }
 
 message InitResponse {

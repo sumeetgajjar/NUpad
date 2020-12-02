@@ -29,6 +29,7 @@ class Collaborators extends Component {
                     {this.props.editors.map(editor => {
                         return (
                             <Chip
+                                key={editor}
                                 avatar={<Avatar>{editor[0]}</Avatar>}
                                 label={editor}
                                 clickable

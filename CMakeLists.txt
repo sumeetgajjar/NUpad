@@ -18,7 +18,7 @@ find_package(gflags 2.2.2 REQUIRED COMPONENTS nothreads_static)
 find_package(glog 0.4.0 REQUIRED)
 find_package(GTest 1.10.0 REQUIRED)
 find_package(Protobuf 3.12.4 REQUIRED)
-find_package(websocketpp REQUIRED)
+find_package(websocketpp 0.8.2 REQUIRED)
 
 include(ExternalProject)
 ExternalProject_Add(

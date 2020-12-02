@@ -15,6 +15,7 @@ class TextArea extends Component {
                 fullWidth
                 value={this.props.content}
                 onChange={this.props.onChange}
+                disabled={this.props.disabled}
             />
         )
     }
