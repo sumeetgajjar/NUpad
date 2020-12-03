@@ -59,6 +59,7 @@ namespace nupad {
         CHECK(change.has_change_id()) << "change id not present";
         CHECK_GT(change.operations_size(), 0) << "change should contain at least one operation";
         auto const &changeId = change.change_id();
+        CHECK_NE(changeId.peer_id(), peerId_) << "cannot apply my change, changeId: " << changeId;
         if (isDuplicateChange(changeId)) {
             LOG(WARNING) << "Duplicate Change, changeId: " << changeId
                          << ", operation Count: " << change.operations_size();
@@ -128,12 +129,7 @@ namespace nupad {
     }
 
     std::string Document::getString() {
-        std::string contents;
-        contents.reserve(list_.size());
-        for (auto const &ch: list_.getContents()) {
-            contents += ch;
-        }
-        return contents;
+        return list_.getContents();
     }
 
     size_t Document::size() {
