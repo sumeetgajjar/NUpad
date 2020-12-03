@@ -23,7 +23,9 @@ services:
       - "4171:4171"
   nupadapp:
     image: nupad
-    command: nupad_app nsqd:4150
+    command: nupad_app --app_name Peer --nsqd_url nsqd:4150
+    ports:
+      - "9002:9002"
     depends_on:
       - nsqd
   nupadwebui:
