@@ -9,6 +9,7 @@
 class DocumentTestSuite : public ::testing::Test {
 protected:
     void SetUp() override {
+        docSize_ = 100;
         doc1_ = new nupad::Document("1", "doc-1");
         doc2_ = new nupad::Document("2", "doc-2");
         doc3_ = new nupad::Document("3", "doc-3");
@@ -26,7 +27,7 @@ protected:
     nupad::Document *doc2_;
     nupad::Document *doc3_;
     nupad::Document *doc4_;
-    int docSize_ = 100;
+    int docSize_;
 
     static std::string insertRandomCharacter(nupad::Document &doc, int count);
 };
@@ -92,6 +93,12 @@ TEST_F(DocumentTestSuite, TestGetChange) {
         ASSERT_EQ(change.change_id(), expectedChangeId);
         ASSERT_EQ(change.operations_size(), 1);
     }
+}
+
+TEST_F(DocumentTestSuite, TestSelfApplyFails) {
+    std::string expectedStr = insertRandomCharacter(*doc1_, docSize_);
+    auto doc1Change = doc1_->getChange();
+    ASSERT_DEATH(doc1_->processChange(doc1Change), "cannot apply my change");
 }
 
 TEST_F(DocumentTestSuite, TestApplyInsert) {
@@ -181,7 +188,7 @@ TEST_F(DocumentTestSuite, TestRandomApply) {
     ASSERT_EQ(doc1_->getString(), doc2_->getString());
 }
 
-TEST_F(DocumentTestSuite, TestConcurrentChanges) {
+TEST_F(DocumentTestSuite, TestConcurrentInsert) {
     docSize_ = 3;
     std::string str1 = "abc";
     for (size_t i = 0; i < str1.size(); i++) {
@@ -204,6 +211,26 @@ TEST_F(DocumentTestSuite, TestConcurrentChanges) {
 
     ASSERT_EQ(doc1_->size(), doc2_->size());
     ASSERT_EQ(doc1_->getString(), doc2_->getString());
+}
+
+
+TEST_F(DocumentTestSuite, TestConcurrentDelete) {
+    doc1_->insert(0, 'a');
+    auto doc1Change = doc1_->getChange();
+    doc2_->processChange(doc1Change);
+
+    doc1_->remove(0);
+    doc2_->remove(0);
+
+    auto doc2Change = doc2_->getChange();
+    doc1_->processChange(doc2Change);
+    doc1Change = doc1_->getChange();
+    doc2_->processChange(doc1Change);
+
+    ASSERT_EQ(doc1_->size(), 0);
+    ASSERT_EQ(doc2_->size(), 0);
+    ASSERT_EQ(doc1_->getString(), "");
+    ASSERT_EQ(doc2_->getString(), "");
 }
 
 

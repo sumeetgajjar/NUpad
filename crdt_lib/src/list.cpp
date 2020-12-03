@@ -29,8 +29,13 @@ namespace nupad::crdt {
         CHECK(elementIdToNodeMap_.find(elementIdToDelete) != elementIdToNodeMap_.end())
                         << "elementID: " << elementIdToDelete << " not exists in the list";
         Node *deleteNode = elementIdToNodeMap_.at(operation.delete_operation().element_id());
-        deleteNode->deletionTS.emplace(operation.delete_operation().delete_timestamp());
-        size_--;
+
+        // Deleting only if node is not deleted
+        // A given node can be queued for multiple delete via applyOperation
+        if (!deleteNode->deletionTS.has_value()) {
+            deleteNode->deletionTS.emplace(operation.delete_operation().delete_timestamp());
+            size_--;
+        }
     }
 
     DoublyLinkedList::Node *DoublyLinkedList::getNodeByIndex(const int index) {
