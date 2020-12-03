@@ -51,14 +51,23 @@ namespace nupad::app {
                   << docHandle.doc->getName() << ", Peer: " << docHandle.peerName;
     }
 
-    void AppServer::initChangeProducer(const std::string &docName) {
-        // TODO: dont create producer objects every time
-        // TODO: remove event loop variable if you can
-//        evpp::EventLoop loop;
-//        evnsq::Producer producer(&loop, evnsq::Option());
-//        loop.QueueInLoop()
-//        producer.Publish(docName, "test message");
-//        producer.ConnectToNSQD(nsqdAddr_);
+    void AppServer::publishBufferedChanges() {
+        // iterate over all the peer connections
+        std::vector<std::tuple<std::string, nupad::common::Change>> bufferedChanges;
+        for(auto & con : docConn_) {
+            auto docHandle = con.second;
+            {
+                std::scoped_lock<std::mutex> lk(*docHandle.docMutex);
+                if (docHandle.doc->hasChange()) {
+                    bufferedChanges.emplace_back(docHandle.doc->getName(), docHandle.doc->getChange());
+                }
+            }
+        }
+        for(auto& [docName, change]: bufferedChanges) {
+            producer_.Publish(docName, change.SerializeAsString());
+        }
+        // if we are here, then we are ready
+        nsqdReady_.store(true);
     }
 
     void AppServer::sendMessage(connection_hdl hdl, const std::string &message) {
@@ -66,7 +75,8 @@ namespace nupad::app {
     }
 
     AppServer::AppServer(std::string serverName, std::string nsqdAddr) :
-            serverName_(std::move(serverName)), peerCounter_(0), nsqdAddr_(std::move(nsqdAddr)) {
+            serverName_(std::move(serverName)), peerCounter_(0), nsqdAddr_(std::move(nsqdAddr)),
+            producer_(&changeProducerLoop_, evnsq::Option()), nsqdReady_(false) {
         using websocketpp::lib::placeholders::_1;
         using websocketpp::lib::placeholders::_2;
         server_.init_asio();
@@ -80,6 +90,8 @@ namespace nupad::app {
                                          _1, _2));
 
         jsonPrintOptions_.always_print_enums_as_ints = true;
+        producer_.SetReadyCallback(bind(&AppServer::publishBufferedChanges, this));
+        producer_.ConnectToNSQD(nsqdAddr_);
     }
 
     void AppServer::onOpen(connection_hdl hdl) {
@@ -130,7 +142,6 @@ namespace nupad::app {
         CHECK(status.ok()) << "JSON string to Message conversion failed: " << rawJson;
         CHECK_NE(inputMessage.operation_type(), common::OperationType::NONE) << "Operation type cannot be NONE";
         // the nsqd client buffers the messages within its queue
-        common::Change change;
         {
             std::scoped_lock<std::mutex> lk(*docHandle.docMutex);
             switch (inputMessage.operation_type()) {
@@ -143,9 +154,20 @@ namespace nupad::app {
                 default:
                     LOG(FATAL) << "Only INSERT and REMOVE operations are allowed.";
             }
-            change = docHandle.doc->getChange();
         }
-        // TODO: producer loop
+        std::optional<common::Change> change;
+        if(nsqdReady_.load()) {
+            // always gonna be a local change here; no need to processChange
+            {
+                std::scoped_lock<std::mutex> lk(*docHandle.docMutex);
+                if(docHandle.doc->hasChange()) {
+                    change.emplace(docHandle.doc->getChange());
+                }
+            }
+            if(change.has_value()) {
+                producer_.Publish(docHandle.doc->getName(), change->SerializeAsString());
+            }
+        }
     }
 
     void AppServer::run(uint32_t port) {

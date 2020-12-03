@@ -12,6 +12,7 @@
 #include <document.h>
 #include <ui.pb.h>
 #include <evpp/event_loop.h>
+#include <evnsq/producer.h>
 #include <google/protobuf/util/json_util.h>
 
 namespace nupad::app {
@@ -40,10 +41,13 @@ namespace nupad::app {
         std::uint32_t peerCounter_;
         std::string nsqdAddr_;
         google::protobuf::util::JsonPrintOptions jsonPrintOptions_;
+        evpp::EventLoop changeProducerLoop_;
+        evnsq::Producer producer_;
+        std::atomic<bool> nsqdReady_;
 
         void initChangeConsumer(DocHandle &docHandle);
 
-        void initChangeProducer(const std::string &docName);
+        void publishBufferedChanges();
 
         void onOpen(connection_hdl hdl);
 
