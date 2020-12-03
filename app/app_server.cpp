@@ -91,19 +91,17 @@ namespace nupad::app {
             nsqdReady_(false) {
         using websocketpp::lib::placeholders::_1;
         using websocketpp::lib::placeholders::_2;
+        // clear all access channels log except connect and disconnect
+        server_.clear_access_channels(websocketpp::log::alevel::all ^ websocketpp::log::alevel::connect ^ websocketpp::log::alevel::disconnect);
         server_.init_asio();
 
-        // TODO: change bind to lambda
-        server_.set_open_handler(bind(&AppServer::onOpen, this,
-                                      _1));
-        server_.set_close_handler(bind(&AppServer::onClose, this,
-                                       _1));
-        server_.set_message_handler(bind(&AppServer::onMessage, this,
-                                         _1, _2));
+        server_.set_open_handler([this](auto && PH1) { onOpen(PH1); });
+        server_.set_close_handler([this](auto && PH1) { onClose(PH1); });
+        server_.set_message_handler([this](auto && PH1, auto && PH2) { onMessage(PH1, PH2); });
 
         jsonPrintOptions_.always_print_enums_as_ints = true;
         jsonPrintOptions_.always_print_primitive_fields = true;
-        publisher_.SetReadyCallback(bind(&AppServer::publishBufferedChanges, this));
+        publisher_.SetReadyCallback([this] { publishBufferedChanges(); });
         publisher_.ConnectToNSQD(nsqdAddr_);
     }
 
