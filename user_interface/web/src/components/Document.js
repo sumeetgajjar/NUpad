@@ -15,19 +15,21 @@ const REMOTE_CHANGE = 4;
 const INSERT_OPERATION = 1;
 const DELETE_OPERATION = 2;
 const CONNECT_URL = 'ws://127.0.0.1:9002';
+const INITIAL_STATE = {
+    content: "",
+    editors: [],
+    showWarning: false,
+    warningMessage: "",
+    textAreaDisabled: true
+};
 
 class Document extends Component {
 
     constructor(props, context) {
         super(props, context);
         this.title = "";
-        this.state = {
-            content: "",
-            editors: [],
-            showWarning: false,
-            warningMessage: "",
-            textAreaDisabled: true
-        };
+        this.peerName = "";
+        this.state = {...INITIAL_STATE};
     }
 
     initSocket = () => {
@@ -55,7 +57,7 @@ class Document extends Component {
 
     handleTitleChange = (title) => {
         if (title !== this.title) {
-            this.setState({...this.state, textAreaDisabled: false});
+            this.setState({...this.state, content: "", textAreaDisabled: false});
             this.title = title;
             console.log("title: ", title);
             this.initSocket();
@@ -65,7 +67,11 @@ class Document extends Component {
     handleLocalChange = (e) => {
         const oldContent = this.state.content;
         const newContent = e.target.value;
-        this.setState({...this.state, "content": newContent});
+        let editors = this.state.editors;
+        if (editors.findIndex(e => e === this.peerName) === -1) {
+            editors.push(this.peerName);
+        }
+        this.setState({...this.state, "content": newContent, "editors": [...editors]});
 
         const diffCount = newContent.length - oldContent.length;
         if (Math.abs(diffCount) > 1) {
@@ -104,16 +110,18 @@ class Document extends Component {
         const msg = JSON.parse(e.data);
         console.log("Received -> ", msg);
         if (msg['messageType'] === INIT_RESPONSE) {
+            this.peerName = msg['peerName'];
             this.setState({
                 ...this.state,
-                "editors": [...new Set([...this.state.editors, msg['peerName']])],
+                "editors": [...msg['editors']],
+                "content": msg['initialContent'],
                 textAreaDisabled: false
             });
         } else if (msg['messageType'] === REMOTE_CHANGE) {
             this.setState({
                 ...this.state,
-                "content": msg['contents'],
-                "editors": [...new Set([...this.state.editors, msg['modifiedBy']])]
+                "editors": [...msg['editors']],
+                "content": msg['content']
             });
         } else {
             console.error("unknown message received: ", msg);

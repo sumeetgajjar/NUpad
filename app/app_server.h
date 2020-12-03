@@ -41,9 +41,13 @@ namespace nupad::app {
         std::uint32_t peerCounter_;
         std::string nsqdAddr_;
         google::protobuf::util::JsonPrintOptions jsonPrintOptions_;
-        evpp::EventLoop changeProducerLoop_;
-        evnsq::Producer producer_;
+
+        evpp::EventLoop changePublisherLoop_;
+        evnsq::Producer publisher_;
+        std::thread publisherLoopThread_;
+
         std::atomic<bool> nsqdReady_;
+        std::unordered_map<std::string, std::vector<common::Change>> docChangeCache;
 
         void initChangeConsumer(DocHandle &docHandle);
 
@@ -55,7 +59,7 @@ namespace nupad::app {
 
         void onMessage(connection_hdl hdl, server::message_ptr message_ptr);
 
-        void initializeDocHandle(const std::string &rawJsonMessage, DocHandle &docHolder);
+        void initializeDocHandle(const std::string &rawJsonMessage, DocHandle &docHandle);
 
         void sendMessage(connection_hdl hdl, const std::string &message);
 
@@ -63,6 +67,11 @@ namespace nupad::app {
 
         void onChangeMessage(common::Change &change, DocHandle &docHandle, nupad::ui::RemoteChange &remoteChange);
 
+        std::string getNewPeerName();
+
+        void sendInitResponse(const DocHandle& handle);
+
+        void syncPastChanges(Document &presentDoc);
     public:
         explicit AppServer(std::string serverName, std::string nsqdAddr);
 

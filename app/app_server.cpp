@@ -13,6 +13,7 @@
 namespace nupad::app {
 
     void AppServer::onChangeMessage(common::Change &change, DocHandle &docHandle, ui::RemoteChange &remoteChange) {
+        LOG(INFO) << "processing change, changeId: " << change.change_id();
         std::string modifiedContents;
         {
             std::scoped_lock<std::mutex> lk(*docHandle.docMutex);
@@ -20,16 +21,18 @@ namespace nupad::app {
             modifiedContents = docHandle.doc->getString();
         }
         remoteChange.set_message_type(nupad::ui::UIMessageType::REMOTE_CHANGE);
-        remoteChange.set_contents(modifiedContents);
-        remoteChange.set_modified_by(change.change_id().peer_id());
+        remoteChange.set_content(modifiedContents);
+        for (const auto &editor: docHandle.doc->getEditors()) {
+            remoteChange.add_editors(editor);
+        }
 
         std::string jsonResponse;
         google::protobuf::util::MessageToJsonString(remoteChange, &jsonResponse, jsonPrintOptions_);
         sendMessage(docHandle.connHdl, jsonResponse);
 
         remoteChange.clear_message_type();
-        remoteChange.clear_contents();
-        remoteChange.clear_modified_by();
+        remoteChange.clear_content();
+        remoteChange.clear_editors();
     }
 
     void AppServer::initChangeConsumer(DocHandle &docHandle) {
@@ -42,7 +45,10 @@ namespace nupad::app {
         client.SetMessageCallback([&](const evnsq::Message *msg) {
             nupad::common::Change change;
             change.ParseFromString(msg->body.ToString());
-            onChangeMessage(change, docHandle, remoteChange);
+            // Only handle changes from others authors
+            if (change.change_id().peer_id() != docHandle.peerName) {
+                onChangeMessage(change, docHandle, remoteChange);
+            }
             return 0;
         });
         client.ConnectToNSQDs(nsqdAddr_);
@@ -52,9 +58,10 @@ namespace nupad::app {
     }
 
     void AppServer::publishBufferedChanges() {
+        LOG(INFO) << "Inside NSQD Producer OnReady callback";
         // iterate over all the peer connections
         std::vector<std::tuple<std::string, nupad::common::Change>> bufferedChanges;
-        for(auto & con : docConn_) {
+        for (auto &con : docConn_) {
             auto docHandle = con.second;
             {
                 std::scoped_lock<std::mutex> lk(*docHandle.docMutex);
@@ -63,8 +70,10 @@ namespace nupad::app {
                 }
             }
         }
-        for(auto& [docName, change]: bufferedChanges) {
-            producer_.Publish(docName, change.SerializeAsString());
+
+        LOG(INFO) << "Publishing " << bufferedChanges.size() << " buffered changes";
+        for (auto&[docName, change]: bufferedChanges) {
+            publisher_.Publish(docName, change.SerializeAsString());
         }
         // if we are here, then we are ready
         nsqdReady_.store(true);
@@ -76,7 +85,10 @@ namespace nupad::app {
 
     AppServer::AppServer(std::string serverName, std::string nsqdAddr) :
             serverName_(std::move(serverName)), peerCounter_(0), nsqdAddr_(std::move(nsqdAddr)),
-            producer_(&changeProducerLoop_, evnsq::Option()), nsqdReady_(false) {
+            changePublisherLoop_(),
+            publisher_(&changePublisherLoop_, evnsq::Option()),
+            publisherLoopThread_([this]() { changePublisherLoop_.Run(); }),
+            nsqdReady_(false) {
         using websocketpp::lib::placeholders::_1;
         using websocketpp::lib::placeholders::_2;
         server_.init_asio();
@@ -90,15 +102,16 @@ namespace nupad::app {
                                          _1, _2));
 
         jsonPrintOptions_.always_print_enums_as_ints = true;
-        producer_.SetReadyCallback(bind(&AppServer::publishBufferedChanges, this));
-        producer_.ConnectToNSQD(nsqdAddr_);
+        jsonPrintOptions_.always_print_primitive_fields = true;
+        publisher_.SetReadyCallback(bind(&AppServer::publishBufferedChanges, this));
+        publisher_.ConnectToNSQD(nsqdAddr_);
     }
 
     void AppServer::onOpen(connection_hdl hdl) {
         LOG(INFO) << "Got a new connection: ";
         DocHandle docHandle;
         docHandle.initialized = false;
-        docHandle.peerName = serverName_ + "_" + std::to_string(++peerCounter_);
+        docHandle.peerName = getNewPeerName();
         docHandle.connHdl = hdl;
         docConn_[hdl] = docHandle;
         LOG(INFO) << "Size of m connections; " << docConn_.size();
@@ -137,6 +150,7 @@ namespace nupad::app {
     }
 
     void AppServer::processUIInput(const std::string &rawJson, DocHandle &docHandle) {
+        LOG(INFO) << "processing UIInput from Peer: " << docHandle.peerName;
         nupad::ui::UIInput inputMessage;
         auto status = google::protobuf::util::JsonStringToMessage(rawJson, &inputMessage);
         CHECK(status.ok()) << "JSON string to Message conversion failed: " << rawJson;
@@ -156,17 +170,21 @@ namespace nupad::app {
             }
         }
         std::optional<common::Change> change;
-        if(nsqdReady_.load()) {
+        if (nsqdReady_.load()) {
             // always gonna be a local change here; no need to processChange
             {
                 std::scoped_lock<std::mutex> lk(*docHandle.docMutex);
-                if(docHandle.doc->hasChange()) {
+                if (docHandle.doc->hasChange()) {
                     change.emplace(docHandle.doc->getChange());
                 }
             }
-            if(change.has_value()) {
-                producer_.Publish(docHandle.doc->getName(), change->SerializeAsString());
+            if (change.has_value()) {
+                LOG(INFO) << "publishing changes, changeId: " << change->change_id();
+                docChangeCache.at(docHandle.doc->getName()).push_back(change.value());
+                publisher_.Publish(docHandle.doc->getName(), change->SerializeAsString());
             }
+        } else {
+            LOG(INFO) << "NSQD not ready, buffering changes";
         }
     }
 
@@ -177,22 +195,52 @@ namespace nupad::app {
         server_.run();
     }
 
-    void AppServer::initializeDocHandle(const std::string &rawJsonMessage, DocHandle &docHolder) {
+    void AppServer::initializeDocHandle(const std::string &rawJsonMessage, DocHandle &docHandle) {
+        LOG(INFO) << "initializing Doc Handle for Peer: " << docHandle.peerName;
         nupad::ui::InitRequest req;
         auto status = google::protobuf::util::JsonStringToMessage(rawJsonMessage, &req);
         CHECK(status.ok()) << "JSON string to Message conversion failed: " << rawJsonMessage;
 
+        docHandle.doc = new Document(docHandle.peerName, req.document_name());
+        syncPastChanges(*docHandle.doc);
+        docHandle.docMutex = new std::mutex();
+        docHandle.changeConsumerLoop = new evpp::EventLoop;
+        docHandle.changeConsumerThread = new std::thread(&AppServer::initChangeConsumer, this, std::ref(docHandle));
+        sendInitResponse(docHandle);
+        docHandle.initialized = true;
+        LOG(INFO) << "Doc Handle for Peer: " << docHandle.peerName << " initialized";
+    }
+
+    std::string AppServer::getNewPeerName() {
+        return serverName_ + "_" + std::to_string(++peerCounter_);
+    }
+
+
+    void AppServer::sendInitResponse(const DocHandle &docHandle) {
         nupad::ui::InitResponse response;
         response.set_message_type(nupad::ui::UIMessageType::INIT_RESPONSE);
-        response.set_peer_name(docHolder.peerName);
+        response.set_peer_name(docHandle.peerName);
+        response.set_initial_content(docHandle.doc->getString());
+        for (const auto &editor: docHandle.doc->getEditors()) {
+            // You are not an editor unless you make a change
+            if (editor != docHandle.peerName) {
+                response.add_editors(editor);
+            }
+        }
+
         std::string jsonResponse;
         google::protobuf::util::MessageToJsonString(response, &jsonResponse, jsonPrintOptions_);
-        sendMessage(docHolder.connHdl, jsonResponse);
+        sendMessage(docHandle.connHdl, jsonResponse);
+    }
 
-        docHolder.doc = new Document(docHolder.peerName, req.document_name());
-        docHolder.docMutex = new std::mutex();
-        docHolder.changeConsumerLoop = new evpp::EventLoop;
-        docHolder.changeConsumerThread = new std::thread(&AppServer::initChangeConsumer, this, std::ref(docHolder));
-        docHolder.initialized = true;
+    void AppServer::syncPastChanges(Document &presentDoc) {
+        if (docChangeCache.find(presentDoc.getName()) == docChangeCache.end()) {
+            docChangeCache[presentDoc.getName()] = std::vector<common::Change>();
+            docChangeCache.at(presentDoc.getName()).reserve(1000);
+        } else {
+            for (auto &change: docChangeCache.at(presentDoc.getName())) {
+                presentDoc.processChange(change);
+            }
+        }
     }
 } // namespace nupad::app

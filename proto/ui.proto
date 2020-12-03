@@ -21,8 +21,8 @@ message UIInput {
 
 message RemoteChange {
   UIMessageType message_type = 1;
-  string contents = 2;
-  string modified_by = 3;
+  string content = 2;
+  repeated string editors = 3;
 }
 
 message InitRequest {
@@ -33,5 +33,7 @@ message InitRequest {
 message InitResponse {
   UIMessageType message_type = 1;
   string peer_name = 2;
+  string initial_content = 3;
+  repeated string editors = 4;
 }
 
