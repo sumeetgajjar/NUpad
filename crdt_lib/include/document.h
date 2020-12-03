@@ -23,6 +23,7 @@ namespace nupad {
         clock::Tick logicalTS_;
         clock::VectorClock changeClock_;
         crdt::DoublyLinkedList list_;
+        std::unordered_set<std::string> editors;
 
         std::unordered_set<common::ID, common::IDHash> appliedChangeIDs;
 
@@ -57,6 +58,10 @@ namespace nupad {
         common::Change getChange();
 
         void processChange(common::Change &change);
+
+        std::string getName();
+
+        std::unordered_set<std::string> getEditors();
     };
 }
 

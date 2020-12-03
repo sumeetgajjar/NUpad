@@ -16,11 +16,6 @@
 
 namespace nupad::crdt {
 
-    /* All definitions are in-place to avoid linker error, this is a standard practice
-     * used in STL.
-     * ref: https://stackoverflow.com/questions/8752837/undefined-reference-to-template-class-constructor
-     */
-
     class DoublyLinkedList {
         class Node {
         public:

@@ -13,6 +13,7 @@ namespace nupad {
             peerId_(std::move(peerId)), name_(std::move(name)), logicalTS_(0),
             changeClock_(peerId_), list_([&]() { return this->getNextElementId(); }) {
         bufferedChange_ = new common::Change;
+        editors.insert(peerId_);
         LOG(INFO) << "Document: " << name_ << " initialized";
     }
 
@@ -95,6 +96,7 @@ namespace nupad {
                 CHECK_EQ(peerId, changeId.peer_id());
                 applyChange(change);
                 appliedChangeIDs.insert(changeId);
+                editors.insert(changeId.peer_id());
                 changeClock_.update(changeId.peer_id(), changeId.tick().value());
                 changeDeque.pop_front();
             }
@@ -136,5 +138,13 @@ namespace nupad {
 
     size_t Document::size() {
         return list_.size();
+    }
+
+    std::string Document::getName() {
+        return name_;
+    }
+
+    std::unordered_set<std::string> Document::getEditors() {
+        return editors;
     }
 }

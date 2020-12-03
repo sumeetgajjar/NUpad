@@ -5,13 +5,19 @@ class Title extends Component {
 
     constructor(props, context) {
         super(props, context);
-        this.state = {documentName: ""};
+        this.title = "";
     }
 
-    handleOnChange = (e) => {
-        this.setState({
-            documentName: e.target.value
-        });
+    handleChange = (e) => {
+        const docName = e.target.value;
+        if (!docName || docName === "") {
+            return false;
+        }
+        this.title = docName;
+    }
+
+    handleBlur = () => {
+        this.props.onBlur(this.title);
     }
 
     render() {
@@ -20,11 +26,11 @@ class Title extends Component {
             <TextField
                 label="Document Name"
                 id="outlined-margin-dense"
-                value={this.props.title}
                 className={this.props.styleClasses.textField}
                 margin="dense"
                 variant="outlined"
-                onChange={this.handleOnChange}
+                onChange={this.handleChange}
+                onBlur={this.handleBlur}
                 fullWidth
                 required
             />

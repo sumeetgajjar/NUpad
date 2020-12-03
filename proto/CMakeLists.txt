@@ -1,4 +1,4 @@
-set(PROTO_FILES common.proto)
+set(PROTO_FILES common.proto ui.proto)
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
 # Generating a placeholder target to generate the src and header files of proto files

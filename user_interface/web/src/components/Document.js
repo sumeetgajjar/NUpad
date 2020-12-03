@@ -1,5 +1,4 @@
 import React, {Component} from 'react'
-import io from 'socket.io-client';
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
 import Paper from "@material-ui/core/Paper";
@@ -8,64 +7,71 @@ import Alert from '@material-ui/lab/Alert';
 import Title from "./Title";
 import TextArea from "./TextArea";
 import Collaborators from "./Collaborators";
-import UsernameDialog from "./UsernameDialog";
 
-// TODO: change this
-const CONNECT_URL = 'ws://127.0.0.1:1234';
+const INIT_REQUEST = 1;
+const INIT_RESPONSE = 2;
+const UI_INPUT = 3;
+const REMOTE_CHANGE = 4;
+const INSERT_OPERATION = 1;
+const DELETE_OPERATION = 2;
+const CONNECT_URL = 'ws://127.0.0.1:9002';
+const INITIAL_STATE = {
+    content: "",
+    editors: [],
+    showWarning: false,
+    warningMessage: "",
+    textAreaDisabled: true
+};
 
 class Document extends Component {
 
     constructor(props, context) {
         super(props, context);
-        this.state = {
-            username: null,
-            content: "",
-            title: "",
-            // TODO: implement this as a set
-            editors: [],
-            showWarning: false,
-            warningMessage: ""
-        };
-        // TODO: change this
-        // this.socket = this.initSocket();
+        this.title = "";
+        this.peerName = "";
+        this.state = {...INITIAL_STATE};
     }
 
     initSocket = () => {
-        const socket = io(CONNECT_URL);
-        socket.on('connect', () => {
+        if (this.socket) {
+            this.socket.close();
+        }
 
-        });
-
-        socket.on('disconnect', () => {
-
-        });
-
-        socket.on('close', () => {
-
-        });
-
-        socket.on('message', this.handleRemoteChange);
-        return socket;
+        this.socket = new WebSocket(CONNECT_URL);
+        this.socket.onopen = () => {
+            this.sendMessage({
+                message_type: INIT_REQUEST,
+                document_name: this.title
+            })
+        };
+        this.socket.onclose = () => {
+            console.log("closed");
+        };
+        this.socket.onmessage = this.handleRemoteChange;
     }
 
-    sendOperationToApp = (message) => {
-        console.log(message);
-        // TODO: change this
-        // this.socket.send(message);
+    sendMessage = (message) => {
+        console.log("sending: ", message);
+        this.socket.send(JSON.stringify(message));
     }
 
-    handleUsernameChange = (username) => {
-        this.setState({...this.state, "username": username, "editors": [username]});
-    }
-
-    handleTitleChange = () => {
-
+    handleTitleChange = (title) => {
+        if (title !== this.title) {
+            this.setState({...this.state, content: "", textAreaDisabled: false});
+            this.title = title;
+            console.log("title: ", title);
+            this.initSocket();
+        }
     }
 
     handleLocalChange = (e) => {
         const oldContent = this.state.content;
         const newContent = e.target.value;
-        this.setState({...this.state, "content": newContent});
+        let editors = this.state.editors;
+        if (editors.findIndex(e => e === this.peerName) === -1) {
+            editors.push(this.peerName);
+        }
+        this.setState({...this.state, "content": newContent, "editors": [...editors]});
 
         const diffCount = newContent.length - oldContent.length;
         if (Math.abs(diffCount) > 1) {
@@ -79,13 +85,21 @@ class Document extends Component {
         if (diffCount === 1) {
             // Insertion
             const ix = cursor - 1;
-            const message = {'type': 'insert', 'ix': ix, 'value': newContent[ix]};
-            this.sendOperationToApp(message)
+            this.sendMessage({
+                'message_type': UI_INPUT,
+                'index': ix,
+                'value': newContent[ix],
+                'operation_type': INSERT_OPERATION
+            })
         } else if (diffCount === -1) {
             // Deletion
             const ix = cursor;
-            const message = {'type': 'delete', 'ix': ix, 'value': oldContent[ix]};
-            this.sendOperationToApp(message)
+            this.sendMessage({
+                'message_type': UI_INPUT,
+                'index': ix,
+                'value': oldContent[ix],
+                'operation_type': DELETE_OPERATION
+            })
         } else {
             console.log("diffCount", diffCount);
             throw new Error("AbsDiffCountMoreThanOneException");
@@ -93,10 +107,25 @@ class Document extends Component {
     }
 
     handleRemoteChange = (e) => {
-        // TODO: verify this
-        console.log(e);
-        let data = "asd";
-        this.setState({...this.state, "content": data});
+        const msg = JSON.parse(e.data);
+        console.log("Received -> ", msg);
+        if (msg['messageType'] === INIT_RESPONSE) {
+            this.peerName = msg['peerName'];
+            this.setState({
+                ...this.state,
+                "editors": [...msg['editors']],
+                "content": msg['initialContent'],
+                textAreaDisabled: false
+            });
+        } else if (msg['messageType'] === REMOTE_CHANGE) {
+            this.setState({
+                ...this.state,
+                "editors": [...msg['editors']],
+                "content": msg['content']
+            });
+        } else {
+            console.error("unknown message received: ", msg);
+        }
     }
 
     render() {
@@ -106,12 +135,13 @@ class Document extends Component {
                     <Grid container spacing={3}>
                         <Grid item md={12} xs={12}>
                             <Paper className={this.props.styleClasses.paper} elevation={10}>
-                                <Title title={this.state.title} styleClasses={this.props.styleClasses}/>
+                                <Title styleClasses={this.props.styleClasses} onBlur={this.handleTitleChange}/>
                             </Paper>
                         </Grid>
                         <Grid item md={9} xs={12}>
                             <Paper className={this.props.styleClasses.paper} elevation={10}>
-                                <TextArea content={this.state.content} onChange={this.handleLocalChange}/>
+                                <TextArea content={this.state.content} onChange={this.handleLocalChange}
+                                          disabled={this.state.textAreaDisabled}/>
                             </Paper>
                         </Grid>
                         <Grid item md={3} xs={12}>
@@ -122,7 +152,6 @@ class Document extends Component {
                         </Grid>
                     </Grid>
                 </Container>
-                <UsernameDialog styleClasses={this.props.styleClasses} onChange={this.handleUsernameChange}/>
                 <Snackbar open={this.state.showWarning} autoHideDuration={3000}
                           anchorOrigin={{vertical: "top", horizontal: "center"}}
                           onClose={() => {
