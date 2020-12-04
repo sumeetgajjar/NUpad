@@ -40,6 +40,12 @@ class NUpadClient {
         return socket;
     };
 
+    close = ()=> {
+        if (this.socket) {
+            this.socket.close();
+        }
+    };
+
     sendMessage = (message: any) => {
         console.log("sending: ", message);
         this.socket.send(JSON.stringify(message));
@@ -49,14 +55,10 @@ class NUpadClient {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             const document = editor.document;
-            const textRange = new vscode.Range(
-                document.positionAt(0),
-                document.positionAt(document.getText().length)
-            );
-
             editor.edit(editBuilder => {
                 const firstLine = document.lineAt(0);
-                editBuilder.delete(textRange);
+                const lastLine = document.lineAt(document.lineCount - 1);
+                editBuilder.delete(new vscode.Range(firstLine.range.start, lastLine.range.end));
                 editBuilder.insert(firstLine.range.start, content);
             });
         } else {
@@ -121,18 +123,21 @@ export function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     console.log('extension "vscode-nupad" is now active!');
-
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with registerCommand
-    // The commandId parameter must match the command field in package.json
-    const disposable = vscode.commands.registerCommand('vscode-nupad.StartNUpad', () => {
-        const nuPadClient = new NUpadClient();
+    let nuPadClient : NUpadClient | null;
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-nupad.StartNUpad', () => {
+        nuPadClient = new NUpadClient();
         vscode.workspace.onDidChangeTextDocument((e) => {
-            nuPadClient.handleDocumentChange(e);
+            if(nuPadClient) {
+                nuPadClient.handleDocumentChange(e);
+            }
         });
-    });
+    }));
 
-    context.subscriptions.push(disposable);
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-nupad.StopNUpad', () => {
+        if(nuPadClient) {
+            nuPadClient.close();
+        }
+    }));
 }
 
 // this method is called when your extension is deactivated
