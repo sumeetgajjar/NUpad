@@ -3,6 +3,11 @@
 # NUpad
 This repository contains implementation of a collaborative editor using Conflict Free Replicated Datatype.
 
+## Demo
+
+![](docs/nupad-demo.gif)
+
+
 #### Docker build
 
 ```shell script
