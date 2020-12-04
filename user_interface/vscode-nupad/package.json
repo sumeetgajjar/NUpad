@@ -18,6 +18,10 @@
 			{
 				"command": "vscode-nupad.StartNUpad",
 				"title": "Start NUpad"
+			},
+			{
+				"command": "vscode-nupad.StopNUpad",
+				"title": "Stop NUpad"
 			}
 		]
 	},

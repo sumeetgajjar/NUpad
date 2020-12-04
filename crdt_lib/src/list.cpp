@@ -39,9 +39,6 @@ namespace nupad::crdt {
     }
 
     DoublyLinkedList::Node *DoublyLinkedList::getNodeByIndex(const int index) {
-        CHECK_GE(index, 0) << "index cannot be negative: " << index;
-        CHECK_LE(index, size_) << "index cannot be greater than the size "
-                                  "of the list: " << index;
         Node *node = head_;
         int distance = index;
         while (node != nullptr && (node->deletionTS.has_value() || distance > 0)) {
@@ -123,6 +120,9 @@ namespace nupad::crdt {
 
     void DoublyLinkedList::insert(const int index, const std::string &value, common::Operation *opPtr) {
         CHECK_EQ(value.size(), 1) << "only single insertion is allowed";
+        CHECK_GE(index, 0) << "index cannot be negative: " << index;
+        CHECK_LE(index, size_) << "index cannot be greater than the size "
+                                  "of the list: " << index;
 
         std::optional<common::ID> prevElementId = std::nullopt;
         if (index > 0) {
@@ -160,6 +160,9 @@ namespace nupad::crdt {
     }
 
     void DoublyLinkedList::remove(const int index, common::Operation *opPtr) {
+        CHECK_GE(index, 0) << "index cannot be negative: " << index;
+        CHECK_LE(index, size_) << "index cannot be greater than the size "
+                                  "of the list: " << index;
         Node *node = getNodeByIndex(index);
         CHECK_NOTNULL(node);
 

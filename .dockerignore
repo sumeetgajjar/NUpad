@@ -8,5 +8,6 @@
 !CMakeLists.txt
 !conanfile.txt
 
-!user_interface
+!user_interface/CMakeLists.txt
+!user_interface/web/
 user_interface/web/node_modules
