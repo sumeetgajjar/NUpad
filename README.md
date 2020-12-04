@@ -12,6 +12,11 @@ git submodule update --init --recursive
 docker build . -t nupad
 ```
 
+#### Running unit tests
+```shell script
+docker run --rm nupad run_all_tests
+```
+
 #### Running the App
 **Note:** Requires docker-compose for running the app, installation instructions for docker-compose can be found
 [here](https://docs.docker.com/compose/install/).

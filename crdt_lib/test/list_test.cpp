@@ -57,7 +57,7 @@ TEST_F(ListTestSuite, ListInsertRemoveTest) {
 
 TEST_F(ListTestSuite, ListFailInsert) {
     ASSERT_DEATH(list1_->insert(1, 'a', op_), "index cannot be greater");
-    ASSERT_DEATH(list1_->insert(-1, 'a', op_), "index cannot be greater");
+    ASSERT_DEATH(list1_->insert(-1, 'a', op_), "index cannot be negative");
 }
 
 TEST_F(ListTestSuite, ListFailRemove) {
